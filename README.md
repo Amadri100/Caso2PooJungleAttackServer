@@ -1,7 +1,27 @@
 ## Generalidades
 Codigo de partida: 4 caracteres alfanumericos, case-insensitive.
 Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
-## Spec
+## Spec Server
+
+### constantes
+#### Constantes (Clase final)
++ IpServidor : static final String 
++ ENCOUNTER_RADIUS : static final double 
++ ANIMAL_SPEED : static final double 
++ ATTACK_COOLDOWN_MS : static final long 
++ MAX_PLAYER_ENERGY : static final int 
++ PLAYER_INITIAL_ENERGY : static final int 
++ PLAYER_DAMAGE : static final int 
++ BOT_INITIAL_ENERGY : static final int
++ BOT_DAMAGE : static final int }
++ PLAYER_PACK_SIZE : static final int
++ BOT_PACK_SIZE : static final int
++ TOTAL_ZONES : static final int 
++ TOTAL_COFFEE_CUPS : static final int 
+- Constantes()
+
+// Las constantes de este archivo no seran modificadas, por lo tanto no es necesario usar un singleton.
+// Ip = "localhost", que es la ip de el dispositvo
 
 ### server
 #### ClientHandler (implements Runnable, Observador) 
@@ -50,7 +70,7 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
  
 // PATRON OBSERVER: es el Observable; notifica a sus ClientHandler.
 
-#### Config 
+#### ServerConfig 
 - static instancia : Config
 - ip : String
 - puerto : int
@@ -61,9 +81,37 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 // Sigue un patron singleton
 
 ### mensajes
+
+#### TipoMensaje (enum)
++ CREATE_MATCH
++ JOIN_MATCH
++ SELECT_ANIMAL
++ MOVE_ANIMALS
++ ATTACK
++ VIEW_ZONE
++ MATCH_CREATED 
++ ANIMAL_SELECTION
++ MATCH_JOINED 
++ ERROR
++ ANIMAL_SELECTION
++ GAME_STARTED
++ STATE_UPDATE
++ GAME_OVER
+
+// Error indicaria que paso algo con el procedimiento actual; solo se usa si el cliente puede hacer algo, en caso de desconexion eso se 
+maneja con excepciones desde el socket.
+
 #### Mensaje
 
 ### Constantes
 #### Contantes
 + longitudCodigoPartida : Static final int
+- Constantes()
+
+## Spec Cliente
+// TEMP hasta crear el otro proyecto.
+
+### constantes
+#### Constantes (Clase final)
++ ServerIP : String
 - Constantes()
