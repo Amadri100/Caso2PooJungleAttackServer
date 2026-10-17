@@ -108,10 +108,104 @@ maneja con excepciones desde el socket.
 + longitudCodigoPartida : Static final int
 - Constantes()
 
+
+
+
+
+
+
+
+
+
+
+
+## Cliente
+Sujeto a cambios...
+//
+```
+src/
+|-- client/
+    |-- constants/
+        |-- Constants.java
+        |-- UIConstants.java
+        |-- NetworkConstants.java
+    |-- network/
+        |-- ServerConnection.java
+        |-- MessageDispatcher.java
+    |-- protocol/
+        |-- Message.java
+        |-- MessageType.java
+        |-- JsonSerializer.java
+    |-- model/
+        |-- GameModel.java
+        |-- Animal.java
+        |-- Position.java
+    |-- controller/
+        |-- SelectionManager.java
+    |-- view/
+        |-- MainWindow.java
+        |-- GamePanel.java
+        |-- HUDPanel.java
+    |-- render/
+        |-- ImageCache.java
+```
+
 ## Spec Cliente
 // TEMP hasta crear el otro proyecto.
 
-### constantes
-#### Constantes (Clase final)
-+ ServerIP : String
-- Constantes()
+### Constants (Clase final)
++ SERVER_IP : static final String
++ SERVER_PORT : static final int
+- Constants()
+
+### UIConstants
++ WINDOW_WIDTH : static final int = ??
++ WINDOW_HEIGHT : static final int = ??
++ FPS : static final int = ?? // tasa de refresco 
+
+### NetworkConstants
++ DEFAULT_PORT : static final int = //
++ DEFAULT_HOST : static final String = // 
+
+### ServerConnection (implements Runnable)
+- socket : Socket 
+- entrada : BufferedReader 
+- salida : PrintWriter // escritor para enviar solicitudes JSON
+- dispatcher : MessageDispatcher // mensajes recibidos hacia el modelo
+- activo : boolean // estado de conexión
++ ServerConnection(host : String, puerto : int, dispatcher : MessageDispatcher)
++ run() : void 
++ enviar(json : String) : void // envía una línea JSON al servidor
++ desconectar() : void // cierra el socket 
+
+### MessageDispatcher //
+
+### GameModel (extends Observable) // ?? por determinar
+
+### Animal
+- id : int 
+- especie : String // nombre de la especie 
+- energia : int 
+- posicionX : double 
+- posicionY : double 
++ Animal(id : int, especie : String, energia : int)
++ estaVivo() : boolean
+
+### SelectionManager
+- animalesSeleccionados : // por determinar
++ SelectionManager()
++ seleccionar(animal : Animal) : void
+
+### MainWindow (extends JFrame)
+- gamePanel : GamePanel 
+- HUDPanel : HUDPanel /
++ MainWindow()
++ mostrarPantalla(panelName : String) : void
+
+### ImageCache (Patrón Singleton)
+- instancia : static ImageCache
+- imagenes : // por determinar
+- ImageCache()
++ static getInstance() : ImageCache
++ getImagen(key : String) : // por determinar
+
