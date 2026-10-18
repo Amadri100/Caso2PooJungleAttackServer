@@ -3,9 +3,18 @@ Codigo de partida: 4 caracteres alfanumericos, case-insensitive.
 Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 ## Spec Server
 
-### constantes
+### utilidades
+
+#### Punto 
+- x : double
+- y : double
++ Punto(x : double, y : double) : Punto
++ getX() : double
++ getY() : double
+
 #### Constantes (Clase final)
-+ IpServidor : static final String 
++ LONGITUD_CODIGO : static final int
++ IP_SERVIDOR : static final String 
 + ENCOUNTER_RADIUS : static final double 
 + ANIMAL_SPEED : static final double 
 + ATTACK_COOLDOWN_MS : static final long 
@@ -132,9 +141,6 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 - moverse() : void
 - atacar() : void
 
-
-
-
 #### ThreadJugador (extender ThreadAnimal)
 - animal : Jugador
 - nickname : String
@@ -162,8 +168,6 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 - buscarSiguienteRuta() : void
 - ejecutarInstruccion() : void
 - intentarAtacar() : boolean
-
-#### TipoAccion
 
 #### EstrategiaBot (interface)
 + elegirDestino(Bot bot, Partida partida) : Posicion
@@ -254,29 +258,58 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + MonoCaBla
 
 
-### util //Nombre temp
-
 ### mapa
 
-#### Posicion
-- x : double
-- y : double
+#### Mapa (singleton)
+- zonas : List<Zona>
+- vecinos : Map<Nodo, List'<Vecinos>>
+- Mapa()
+- crearZonas() : void
+- crearNodos() : void
+- crearVecinos() : void
+- crearMapaVecinos() : void
+- crearMapa() : Mapa
++ getInstance() : Mapa
++ getZonas() : List<Zona>
++ getVecinos() : Map<Nodo, List\<Vecinos>>
++ getVecinosDe(Nodo) : List<Vecinos>
++ getPeso(Nodo, Nodo) : Double
 
-#### Ruta
-- puntos : Queue\<Posicion>
-+ siguiente() : Posicion
-+ estaVacia() : boolean
+// Primero se crean las zonas, despues se crean los nodos y se insertan en las zonas y finalmente se crean los vecinos, al crear 
+los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar crear el mismo objeto 2 veces.
+
+// Como el mapa no cambia es mejor que exista un unico mapa para todo el programa.
 
 #### Zona
+- nodos : List<Nodo>
+- mapa : Map
++ Zona(Map)
++ getNodos() : List<Nodo>
++ getMapa() : Map
++ agregarNodo(Nodo) : void
++ contiene(Nodo) : boolean
+
+#### Nodo
 - id : int
-- vecinas : ArrayList\<Zona>
-- entidades : ArrayList\<Entidad>
-- eventos : ArrayList\<Evento>
-+ agregar(Entidad entidad) : void
-+ remover(Entidad entidad) : void
-+ getAnimales() : ArrayList\<Animal>
-+ contieneJugador(Jugador jugador) : boolean
-+ registrarEvento(Evento evento) : void
+- posicion : Punto
+- zona : Zona
++ Nodo(int, Punto, Zona)
++ getId() : int
++ getPosicion() : Punto
++ getZona() : Zona
++ equals(Object) : boolean
++ hashCode() : int
+
+#### Vecinos
+- nodoA : Nodo
+- nodoB : Nodo
+- peso : Double
++ Vecinos(Nodo, Nodo, Double)
++ getNodoA() : Nodo
++ getNodoB() : Nodo
++ getPeso() : Double
++ formaParte(Nodo) : boolean
++ getOtro(Nodo) : Nodo
 
 
 ### mensajes
@@ -302,10 +335,6 @@ maneja con excepciones desde el socket.
 
 #### Mensaje
 
-### Constantes
-#### Contantes
-+ longitudCodigoPartida : Static final int
-- Constantes()
 
 
 
