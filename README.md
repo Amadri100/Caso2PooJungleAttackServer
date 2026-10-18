@@ -80,6 +80,205 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + getPuerto() : int
 // Sigue un patron singleton
 
+
+### controlador
+#### Controlador
+- mapa : Map
+- servidor : Server
+- partidas : ConcurrentHashMap\<String, Partida>
+- ejecutor : ExecutorService
++ crearJuego(String nickname) : String
++ unirsePartida(String codigo, String nickname) : boolean
++ recibirDato(String codigo, int jugadorId, Mensaje mensaje) : void
++ finalizarPartida(String codigo) : void
+
+### logica
+
+#### EstadoPartida (enum)
++ ESPERANDO
++ SELECCION
++ JUGANDO
++ TERMINADA
+
+#### Partida (implements Runnable)
+- controlado: Controlador
+- codigo : String
+- estado : EstadoPartida
+- jugadores : ArrayList\<Jugador>
+- bots : ArrayList\<Bot>
+- cafes : ArrayList\<Cafe>
+- banderas : ArrayList\<Bandera>
+- ejecutor : ExecutorService
+- notificador : Notificador
+- inicio : long
++ run() : void
++ crearJuego() : boolean
++ iniciarPartida() : boolean
++ actualizar(Datos) : void
++ notificar(Datos) : void
++ recibirDato(int jugadorId, Mensaje mensaje) : void
++ finalizar(Jugador ganador) : boolean
+- asignarZonas() : void
+- crearBanderas() : void
+- crearAnimales() : void
+- crearCafes() : void
+- filtrarZona(Jugador jugador) : Zona
+- ejecutarDato(Jugador jugador, Mensaje mensaje) : void
+- obtenerDatos(Jugador jugador) : DatosJugador
+
+#### ThreadAnimal (Abstract implements Runnable)
+- rutaActual : Ruta
+- objetivoAtaque : Animal
+- moverse() : void
+- atacar() : void
+
+
+
+
+#### ThreadJugador (extender ThreadAnimal)
+- animal : Jugador
+- nickname : String
+- objetivoAtaque : Animal
+- ruta : Ruta
+- ultimoAtaque : long
+- activo : boolean
++ run() : void
++ setDestino(Posicion destino) : void
++ setObjetivo(Animal objetivo) : void
++ detener() : void
+- moverse() : void
+- atacar() : void
+- verificarBandera() : boolean
+
+#### ThreadBot (implements Runnable)
+- bot : Bot
+- rutaActual : Ruta
+- instruccionActual : Instruccion
+- estrategia : EstrategiaBot
+- ultimoAtaque : long
+- activo : boolean
++ run() : void
++ detener() : void
+- buscarSiguienteRuta() : void
+- ejecutarInstruccion() : void
+- intentarAtacar() : boolean
+
+#### TipoAccion
+
+#### EstrategiaBot (interface)
++ elegirDestino(Bot bot, Partida partida) : Posicion
+
+#### EstrategiaDirecta (implements EstrategiaBot)
++ elegirDestino(Bot bot, Partida partida) : Posicion
+
+#### EstrategiaCercana (implements EstrategiaBot)
++ elegirDestino(Bot bot, Partida partida) : Posicion
+
+#### EstrategiaAleatoria (implements EstrategiaBot)
++ elegirDestino(Bot bot, Partida partida) : Posicion
+
+#### SelectorEstrategia
+- random : Random
++ elegir() : EstrategiaBot
+
+#### Notificador
+- conexiones : HashMap\<Jugador, Conexion>
++ registrar(Jugador jugador, Conexion conexion) : void
++ notificar(Jugador jugador, DatosJugador datos) : void
++ notificarTodos(HashMap\<Jugador, DatosJugador> datos) : void
+
+#### Entidad (abstract)
+- id : int
+- posicion : Posicion
++ getPosicion() : Posicion
++ setPosicion(Posicion posicion) : void
++ distanciaCon(Entidad otra) : double
+
+#### Animal (abstract, extends Entidad)
+- especie : Especie
+- energia : int
+- danio : int
+- zonaActual : Zona
++ recibirDanio(int cantidad) : void
++ estaVivo() : boolean
++ getPropiedades() : PropiedadesAnimal
++ energiaInicial() : int (abstract)
++ danioInicial() : int (abstract)
++ moverse() : void
+
+#### Jugador (extends Animal)
+- nickname : String
+- pack : PackJugador
+- zonaElegida : Zona
+- cafesConsumidos : int
+- botsEliminados : int
++ elegirZona(Zona zona) : void
++ getZonasConAnimales() : ArrayList\<Zona>
++ sumarCafe() : void
++ sumarBotEliminado() : void
+
+#### Bot (extends Animal)
+- estrategia : EstrategiaBot
++ getEstrategia() : EstrategiaBot
++ cambiarDeEstrategia() : void
+
+#### Cafe (extends Entidad)
+- consumido : boolean
++ consumir() : boolean
++ estaDisponible() : boolean
+
+#### Bandera (extends Entidad)
+- dueno : Jugador
+- color : String
++ fueTocadaPor(Animal animal) : boolean
+
+#### Evento
+- tipo : TipoEvento
+- origenId : int
+- destinoId : int
+- valor : int
+
+#### DatosJugador
+- zona : Zona
+- animales : ArrayList\<Animal>
+- eventos : ArrayList\<Evento>
+- posicionesObjetivos : ArrayList\<Posicion>
+
+#### TipoEspecie (enum)
++ JAGUAR
++ Yiguirro
++ Perezoso
++ Danta
++ Tucan
++ VenadoCoBla
++ MonoCaBla
+
+
+### util //Nombre temp
+
+### mapa
+
+#### Posicion
+- x : double
+- y : double
+
+#### Ruta
+- puntos : Queue\<Posicion>
++ siguiente() : Posicion
++ estaVacia() : boolean
+
+#### Zona
+- id : int
+- vecinas : ArrayList\<Zona>
+- entidades : ArrayList\<Entidad>
+- eventos : ArrayList\<Evento>
++ agregar(Entidad entidad) : void
++ remover(Entidad entidad) : void
++ getAnimales() : ArrayList\<Animal>
++ contieneJugador(Jugador jugador) : boolean
++ registrarEvento(Evento evento) : void
+
+
 ### mensajes
 
 #### TipoMensaje (enum)
