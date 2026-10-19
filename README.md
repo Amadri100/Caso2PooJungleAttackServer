@@ -3,7 +3,18 @@ Codigo de partida: 4 caracteres alfanumericos, case-insensitive.
 Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 ## Spec Server
 
+### main
+#### Main
++ main(String args[]) : static void 
+
+
 ### utilidades
+
+####
+
+#### Json
++ mensajeAJson(msg : Mensaje) : String
++ jsonAMensaje(json : String) : Mensaje
 
 #### Punto 
 - x : double
@@ -27,29 +38,28 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + BOT_PACK_SIZE : static final int
 + TOTAL_ZONES : static final int 
 + TOTAL_COFFEE_CUPS : static final int 
++ NOMBRE_UNIVERSAL : static final String
 - Constantes()
 
 // Las constantes de este archivo no seran modificadas, por lo tanto no es necesario usar un singleton.
 // Ip = "localhost", que es la ip de el dispositvo
+// NOMBRE_UNIVERSAL string como @Todos, reservado especificamente para referirse a todos los clientes.
 
 ### server
-#### ClientHandler (implements Runnable, Observador) 
+#### ClientHandler (implements Runnable) 
 - socket : Socket
+- input : BufferedReader
+- output : BufferedWritter
 - entrada : BufferedReader
 - salida : PrintWriter
 + ClientHandler(socket : Socket, servidor : Servidor)
 + run() : void
 + actualizar(mensaje: Mensaje) : void
-+ enviar(json : String) : void
 + cerrar() : void
-+ getPartida() : Partida
-+ setPartida(partida : Partida) : void
-- parsearMensaje(json : String) : Comando
-- clasificar(comando : Comando) : void
-- procesarSolicitudes() : void
-- procesarMensajesPartida() : void
++ mandar(mensaje : Mensaje) : void
++ ascenderMensaje(mensaje : Mensaje) : void
 
-
+// Recibe y procesa los mensajes que vienen desde un cliente.
 
 #### ThreadConexiones (implements Runnable) 
 - serverSocket : ServerSocket
@@ -58,16 +68,13 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + ThreadConexiones(servidor : Servidor, puerto : int)
 + run() : void
 + detener() : void
+
 // Hilo infinito que acepta conexiones. Por cada Socket crea un ClientHandler
 // y se lo entrega a Servidor.registrarCliente(). El puerto viene de Config.
 
-
-// Servidor
-// PATRON MEDIATOR/FACADE: se conecta con las demas partidas mediante InterfazPartidas.
-// El ExecutorService se aplica a ThreadConexiones y a cada ClientHandler.
-// Se usa una Observable propia (java.util.Observable esta deprecado).
-#### Servidor (extends Observable) 
-- clientes : List<ClientHandler>
+#### Servidor 
+- controlador : Controlador
+- clientes : Map\<String, ClientHandler>
 - threadConexiones : ThreadConexiones
 - executor : ExecutorService
 + Servidor()
@@ -75,27 +82,34 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + detener() : void
 + registrarCliente(handler : ClientHandler) : void
 + removerCliente(handler : ClientHandler) : void
-+ notificar(mensaje: Mensaje) : void
++ mandarAClientes(datos : Datos) : void 
++ mandarASistema(msg : Mensaje) : void 
  
-// PATRON OBSERVER: es el Observable; notifica a sus ClientHandler.
+El ExecutorService se aplica a ThreadConexiones y a cada ClientHandler.
+// Se manda el mensaje segun el nombre que esta asociado al dato, si tiene el NOMBRE_UNIVERSAL, se manda ese mismo mensaje a todos
+los clientes.
 
 #### ServerConfig 
 - static instancia : Config
 - ip : String
 - puerto : int
+- nombresOcupados : List\<String>
 - Config()
 + static getInstance() : Config
 + getIp() : String
 + getPuerto() : int
+
 // Sigue un patron singleton
 
 
 ### controlador
 #### Controlador
-- mapa : Map
+- mapa : Mapa
 - servidor : Server
 - partidas : ConcurrentHashMap\<String, Partida>
 - ejecutor : ExecutorService
++ crearMensaje(Datos) : void
++ ejecutarMensaje(msg : Mensaje) : void
 + crearJuego(String nickname) : String
 + unirsePartida(String codigo, String nickname) : boolean
 + recibirDato(String codigo, int jugadorId, Mensaje mensaje) : void
@@ -153,10 +167,10 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + setObjetivo(Animal objetivo) : void
 + detener() : void
 - moverse() : void
-- atacar() : void
+- atacar() : void 
 - verificarBandera() : boolean
 
-#### ThreadBot (implements Runnable)
+#### ThreadBot (implements Runnable) 
 - bot : Bot
 - rutaActual : Ruta
 - instruccionActual : Instruccion
@@ -315,6 +329,8 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 ### mensajes
 
 #### TipoMensaje (enum)
++ PRIMER_MENSAJE
++ INDICAR_NOMBRE
 + CREATE_MATCH
 + JOIN_MATCH
 + SELECT_ANIMAL
@@ -330,8 +346,33 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + STATE_UPDATE
 + GAME_OVER
 
-// Error indicaria que paso algo con el procedimiento actual; solo se usa si el cliente puede hacer algo, en caso de desconexion eso se 
+// Inicio
+// PRIMER_MENSAJE, en el PRIMER_MENSAJE se indica de si hubo una conexion exitosa, si se rechaza y las razones,
+// INDICAR_NOMBRE cliente -> servidor, se manda con un nombre.
+
+// Pantalla de selección de partidas
+// CREATE_MATCH
+// JOIN_MATCH
+
+// Juego
+// SELECT_ANIMAL
+// MOVE_ANIMALS
+// ATTACK
+// VIEW_ZONE
+// MATCH_CREATED 
+// ANIMAL_SELECTION
+// MATCH_JOINED 
+// ERROR
+// ANIMAL_SELECTION
+// GAME_STARTED
+// STATE_UPDATE
+// GAME_OVER
+
+// General
+// ERROR: indicaria que paso algo con el procedimiento actual; solo se usa si el cliente puede hacer algo, en caso de desconexion eso se 
 maneja con excepciones desde el socket.
+
+ 
 
 #### Mensaje
 
