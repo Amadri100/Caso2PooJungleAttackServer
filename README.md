@@ -650,15 +650,23 @@ src/
 + SERVER_IP : static final String
 + SERVER_PORT : static final int
 - Constants()
+// almacena los parámetros principales de conexión al servidor del juego
 
 ### UIConstants
 + WINDOW_WIDTH : static final int = ??
 + WINDOW_HEIGHT : static final int = ??
 + FPS : static final int = ?? // tasa de refresco 
++ WINDOW_WIDTH : static final int = 1280
++ WINDOW_HEIGHT : static final int = 720
++ FPS : static final int = 30 // Tasa de refresco de la interfaz gráfica
+
+// se define las dimensiones de la ventana de Swing y los valores de renderizado
 
 ### NetworkConstants
 + DEFAULT_PORT : static final int = //
 + DEFAULT_HOST : static final String = // 
+
+// Valores predeterminados de red 
 
 ### ServerConnection (implements Runnable)
 - socket : Socket 
@@ -671,12 +679,15 @@ src/
 + enviar(json : String) : void // envía una línea JSON al servidor
 + desconectar() : void // cierra el socket 
 
-### MessageDispatcher //
+// hilo independiente que mantiene la comunicación con el servidor, leyendo líneas JSON 
+
+### MessageDispatcher 
 - model : GameModel 
 + MessageDispatcher(model : GameModel)
 + despachar(json : String) : void // parsea el JSON recibido a Message y actualiza el modelo usando 
+// procesa los mensajes raw que vienen de la red, los deserializa y actualiza el modelo local de forma segura para Swing
 
-### GameModel (extends Observable) // ?? por determinar
+### GameModel (extends Observable) 
 - nickname : String // nombre del jugador local
 - codigoPartida : String // código
 - zonaActualVisible : int // ID de la zona que el jugador está viendo
@@ -685,6 +696,8 @@ src/
 + actualizarEstado(datos : Datos) : void // sincroniza el estado local 
 + getZonaActualVisible() : int
 + setZonaActualVisible(zonaId : int) : void
+
+// almacena la información que el servidor reporta y notifica a las vistas
 
 ### Animal
 - id : int 
@@ -695,6 +708,8 @@ src/
 + Animal(id : int, especie : String, energia : int)
 + estaVivo() : boolean
 
+/ Representa de forma local a un animal del juego, conteniendo su posición, energía y especie para ser renderizado
+
 ### SelectionManager
 - animalesSeleccionados : // por determinar
 + SelectionManager()
@@ -702,11 +717,16 @@ src/
 + deseleccionarTodo() : void
 + getSeleccionados() : List<Animal>
 
+// controla la selección de elementos mediante clics del usuario en la interfaz para mandar órdenes luego
+
 ### MainWindow (extends JFrame)
 - gamePanel : GamePanel 
 - HUDPanel : HUDPanel /
 + MainWindow()
 + mostrarPantalla(panelName : String) : void
+
+// ventana principal de la aplicación en Swing que gestiona el cambio entre paneles 
+// HUDPanel de la interfaz de usuario para mostrar estadísticas de juego, tazas de café y barras de vida
 
 ### ImageCache (Patrón Singleton)
 - instancia : static ImageCache
@@ -715,3 +735,4 @@ src/
 + static getInstance() : ImageCache
 + getImagen(key : String) : // por determinar
 
+// Caché global que precarga y almacena en memoria las imágenes y texturas para evitar lecturas de disco que sean de forma repetitiva
