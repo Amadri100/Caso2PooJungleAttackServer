@@ -289,7 +289,7 @@ de movimientos
 + TUCAN
 + VENADO_CO_BLA
 + MONO_CO_BLA
-
++ NINGUNA
 
 ### mapa
 
@@ -309,8 +309,8 @@ de movimientos
 - nodoActual : int
 
 #### Mapa (singleton)
-- zonas : List<Zona>
-- vecinos : Map<Nodo, List\<Vecinos>>
+- zonas : List\<Zona>
+- vecinos : Map\<Nodo, List\<Vecinos>>
 - Mapa()
 - crearZonas() : void
 - crearNodos() : void
@@ -319,9 +319,9 @@ de movimientos
 - crearMapa() : Mapa
 + getInstance() : Mapa
 + getRuta(nodoA : Nodo, nodoB : Nodo) : Ruta
-+ getZonas() : List<Zona>
-+ getVecinos() : Map<Nodo, List\<Vecinos>>
-+ getVecinosDe(Nodo) : List<Vecinos>
++ getZonas() : List\<Zona>
++ getVecinos() : Map\<Nodo, List\<Vecinos>>
++ getVecinosDe(Nodo) : List\<Vecinos>
 + getPeso(Nodo, Nodo) : Double
 
 // Primero se crean las zonas, despues se crean los nodos y se insertan en las zonas y finalmente se crean los vecinos, al crear 
@@ -330,10 +330,10 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 // Como el mapa no cambia es mejor que exista un unico mapa para todo el programa.
 
 #### Zona
-- nodos : List<Nodo>
+- nodos : List\<Nodo>
 - mapa : Map
 + Zona(Map)
-+ getNodos() : List<Nodo>
++ getNodos() : List\<Nodo>
 + getMapa() : Map
 + agregarNodo(Nodo) : void
 + contiene(Nodo) : boolean
@@ -508,8 +508,8 @@ maneja con excepciones desde el socket.
 #### MensajeMoveAnimals (extends MensajeJugador)
 - animales : List\<int[]>
 - idNodoDestino : int
-+ MensajeMoveAnimals(nombre : String, animales : List<int[]>, idNodoDestino : int)
-+ getAnimales() : List<int[]>
++ MensajeMoveAnimals(nombre : String, animales : List\<int[]>, idNodoDestino : int)
++ getAnimales() : List\<int[]>
 + getIdNodoDestino() : int
 
 // tipo = MOVE_ANIMALS
@@ -555,18 +555,18 @@ maneja con excepciones desde el socket.
 
 #### MensajeMatchJoined (extends MensajeServidor)
 - codigo : String
-- jugadores : List<String>
-+ MensajeMatchJoined(nombre : String, codigo : String, jugadores : List<String>)
+- jugadores : List\<String>
++ MensajeMatchJoined(nombre : String, codigo : String, jugadores : List\<String>)
 + getCodigo() : String
-+ getJugadores() : List<String>
++ getJugadores() : List\<String>
 
 // tipo = MATCH_JOINED
 
 #### MensajeAnimalSelection (extends MensajeServidor)
-- especiesDisponibles : List<TipoEspecie>
+- especiesDisponibles : List\<TipoEspecie>
 - seleccionOponente : TipoEspecie
-+ MensajeAnimalSelection(nombre : String, especiesDisponibles : List<TipoEspecie>), especieE : TipoEspecie) 
-+ getEspeciesDisponibles() : List<TipoEspecie>
++ MensajeAnimalSelection(nombre : String, especiesDisponibles : List\<TipoEspecie>), especieE : TipoEspecie) 
++ getEspeciesDisponibles() : List\<TipoEspecie>
 + getSeleccionOponente() : TipoEspecie
 
 // tipo = ANIMAL_SELECTION
