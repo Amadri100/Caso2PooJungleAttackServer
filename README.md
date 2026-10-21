@@ -39,6 +39,7 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + TOTAL_COFFEE_CUPS : static final int 
 + NOMBRE_UNIVERSAL : static final String
 + MOVIMIENTOS_MINIMOS_CAMBIAR : static final int
++ INTERVALO_STATE_UPDATE_MS : static final long
 - Constantes()
 
 // Las constantes de este archivo no seran modificadas, por lo tanto no es necesario usar un singleton.
@@ -46,18 +47,20 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 // NOMBRE_UNIVERSAL string como @Todos, reservado especificamente para referirse a todos los clientes.
 
 ### server
-#### ClientHandler (implements Runnable) 
+#### ClientHandler (implements Runnable)
 - socket : Socket
-- input : BufferedReader
-- output : BufferedWritter
 - entrada : BufferedReader
 - salida : PrintWriter
+- servidor : Servidor
+- nombre : String
+- activo : boolean
 + ClientHandler(socket : Socket, servidor : Servidor)
 + run() : void
-+ actualizar(mensaje: Mensaje) : void
++ getNombre() : String
++ setNombre(nombre : String) : void
++ mandar(mensaje : MensajeServidor) : void
++ ascenderMensaje(mensaje : MensajeJugador) : void
 + cerrar() : void
-+ mandar(mensaje : Mensaje) : void
-+ ascenderMensaje(mensaje : Mensaje) : void
 
 // Recibe y procesa los mensajes que vienen desde un cliente.
 
@@ -72,48 +75,87 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 // Hilo infinito que acepta conexiones. Por cada Socket crea un ClientHandler
 // y se lo entrega a Servidor.registrarCliente(). El puerto viene de Config.
 
-#### Servidor 
+#### Servidor
 - controlador : Controlador
-- clientes : Map\<String, ClientHandler>
+- clientes : ConcurrentHashMap<String, ClientHandler>   // ya con nombre asignado
+- conectados : List<ClientHandler>                      // aceptados, sin nombre todavía
 - threadConexiones : ThreadConexiones
 - executor : ExecutorService
 + Servidor()
 + iniciar() : void
 + detener() : void
 + registrarCliente(handler : ClientHandler) : void
++ asignarNombre(handler : ClientHandler, nombre : String) : boolean
 + removerCliente(handler : ClientHandler) : void
-+ mandarAClientes(datos : Datos) : void 
-+ mandarASistema(msg : Mensaje) : void 
++ mandarACliente(nombre : String, msg : MensajeServidor) : void
++ mandarATodos(msg : MensajeServidor) : void
++ mandarASistema(msg : MensajeJugador) : void
  
 El ExecutorService se aplica a ThreadConexiones y a cada ClientHandler.
 // Se manda el mensaje segun el nombre que esta asociado al dato, si tiene el NOMBRE_UNIVERSAL, se manda ese mismo mensaje a todos
 los clientes.
 
-#### ServerConfig 
-- static instancia : Config
+#### ServerConfig
+- static instancia : ServerConfig
 - ip : String
 - puerto : int
-- nombresOcupados : List\<String>
-- Config()
-+ static getInstance() : Config
+- nombresOcupados : ConcurrentSkipListSet<String>    
+- ServerConfig()
++ static getInstance() : ServerConfig
 + getIp() : String
 + getPuerto() : int
++ reservarNombre(nombre : String) : boolean
++ liberarNombre(nombre : String) : void
 
 // Sigue un patron singleton
 
+// Un set porque no se repite
 
 ### controlador
 #### Controlador
 - mapa : Mapa
-- servidor : Server
-- partidas : ConcurrentHashMap\<String, Partida>
+- servidor : Servidor
+- partidas : ConcurrentHashMap<String, Partida>
+- partidaDeJugador : ConcurrentHashMap<String, String>   // nombre -> código de partida
 - ejecutor : ExecutorService
-+ crearMensaje(Datos) : void
-+ ejecutarMensaje(msg : Mensaje) : void
-+ crearJuego(String nickname) : String
-+ unirsePartida(String codigo, String nickname) : boolean
-+ recibirDato(String codigo, int jugadorId, Mensaje mensaje) : void
-+ finalizarPartida(String codigo) : void
+- ejecutorMensajes : EjecutorMensajes
++ Controlador(servidor : Servidor)
++ ejecutarMensaje(msg : MensajeJugador) : void
++ actualizarEstado(datos : HashMap<String, Datos>) : void
++ enviar(nombre : String, msg : MensajeServidor) : void
++ enviarATodos(msg : MensajeServidor) : void
++ crearJuego(nickname : String) : String
++ unirsePartida(codigo : String, nickname : String) : boolean
++ getPartidaDe(nombre : String) : Partida
++ finalizarPartida(codigo : String) : void
++ jugadorDesconectado(nombre : String) : void
+
+
+
+#### EjecutorMensajes   ()
+- manejadores : Map<TipoMensaje, ManejadorMensaje>
+- controlador : Controlador
++ EjecutorMensajes(controlador : Controlador)
++ registrar(manejador : ManejadorMensaje) : void
++ ejecutar(msg : MensajeJugador) : void
+- registrarPorDefecto() : void
+
+#### ManejadorMensaje (interface)
++ getTipo() : TipoMensaje
++ ejecutar(msg : MensajeJugador, controlador : Controlador) : void
+
+#### ManejadorCreateMatch (implements ManejadorMensaje)
++ ejecutar(msg : MensajeJugador, controlador : Controlador) : void
+#### ManejadorJoinMatch (implements ManejadorMensaje)
++ ejecutar(msg : MensajeJugador, controlador : Controlador) : void
+#### ManejadorSelectAnimal (implements ManejadorMensaje)
++ ejecutar(msg : MensajeJugador, controlador : Controlador) : void
+#### ManejadorMoveAnimals (implements ManejadorMensaje)
++ ejecutar(msg : MensajeJugador, controlador : Controlador) : void
+#### ManejadorAttack (implements ManejadorMensaje)
++ ejecutar(msg : MensajeJugador, controlador : Controlador) : void
+#### ManejadorViewZone (implements ManejadorMensaje)
++ ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 
 ### logica
 
@@ -213,8 +255,14 @@ de movimientos
 - random : Random
 + elegir() : EstrategiaBot
 
+#### TipoEntidad (enum)
++ ANIMAL
++ CAFE
++ BANDERA
+
 #### Entidad (abstract)
 - id : int
+- tipo : TipoEntidad
 - posicion : Posicion
 + getPosicion() : Posicion
 + setPosicion(posicion : Posicion) : void
@@ -277,8 +325,12 @@ de movimientos
 - origen : Posicion
 - destino : Posicion
 
-#### Datos
-
+#### Datos:
+- jugadorA : Jugador
+- jugadorB : Jugador
+- entidadesDisponibles : List\<Entidad>
+- zonaActual : Zona
+- evento : List\<Eventos> 
 
 
 #### TipoEspecie (enum)
@@ -425,30 +477,6 @@ maneja con excepciones desde el socket.
 + STATE_UPDATE
 + GAME_OVER
 + ERROR
-
-// Inicio
-// PRIMER_MENSAJE        servidor -> cliente
-// INDICAR_NOMBRE        cliente -> servidor
-
-// Pantalla de selección de partidas
-// CREATE_MATCH          cliente -> servidor
-// JOIN_MATCH            cliente -> servidor
-// MATCH_CREATED         servidor -> cliente
-// MATCH_JOINED          servidor -> cliente
-
-// Juego
-// ANIMAL_SELECTION      servidor -> cliente
-// SELECT_ANIMAL         cliente -> servidor
-// GAME_STARTED          servidor -> cliente
-// MOVE_ANIMALS          cliente -> servidor
-// ATTACK                cliente -> servidor
-// VIEW_ZONE             cliente -> servidor
-// STATE_UPDATE          servidor -> cliente
-// GAME_OVER             servidor -> cliente
-
-// General
-// ERROR                 servidor -> cliente
-
 
 #### Mensaje (abstract)
 - tipo : TipoMensaje
