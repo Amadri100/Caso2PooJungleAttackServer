@@ -672,8 +672,19 @@ src/
 + desconectar() : void // cierra el socket 
 
 ### MessageDispatcher //
+- model : GameModel 
++ MessageDispatcher(model : GameModel)
++ despachar(json : String) : void // parsea el JSON recibido a Message y actualiza el modelo usando 
 
 ### GameModel (extends Observable) // ?? por determinar
+- nickname : String // nombre del jugador local
+- codigoPartida : String // código
+- zonaActualVisible : int // ID de la zona que el jugador está viendo
+- animalesLocales : List<Animal> // Lista de animales del paquete del jugador
++ GameModel()
++ actualizarEstado(datos : Datos) : void // sincroniza el estado local 
++ getZonaActualVisible() : int
++ setZonaActualVisible(zonaId : int) : void
 
 ### Animal
 - id : int 
@@ -688,6 +699,8 @@ src/
 - animalesSeleccionados : // por determinar
 + SelectionManager()
 + seleccionar(animal : Animal) : void
++ deseleccionarTodo() : void
++ getSeleccionados() : List<Animal>
 
 ### MainWindow (extends JFrame)
 - gamePanel : GamePanel 
