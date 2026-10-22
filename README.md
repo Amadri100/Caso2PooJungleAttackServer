@@ -9,8 +9,6 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 
 ### utilidades
 
-####
-
 #### Json
 + mensajeAJson(msg : Mensaje) : String
 + jsonAMensaje(json : String) : Mensaje
@@ -77,8 +75,8 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 
 #### Servidor
 - controlador : Controlador
-- clientes : ConcurrentHashMap<String, ClientHandler>   // ya con nombre asignado
-- conectados : List<ClientHandler>                      // aceptados, sin nombre todavía
+- clientes : ConcurrentHashMap\<String, ClientHandler>  
+- conectados : List\<ClientHandler>                      
 - threadConexiones : ThreadConexiones
 - executor : ExecutorService
 + Servidor()
@@ -91,15 +89,16 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + mandarATodos(msg : MensajeServidor) : void
 + mandarASistema(msg : MensajeJugador) : void
  
-El ExecutorService se aplica a ThreadConexiones y a cada ClientHandler.
+ 
 // Se manda el mensaje segun el nombre que esta asociado al dato, si tiene el NOMBRE_UNIVERSAL, se manda ese mismo mensaje a todos
 los clientes.
+// conectados son los clientes que no han recibido nombre
 
 #### ServerConfig
 - static instancia : ServerConfig
 - ip : String
 - puerto : int
-- nombresOcupados : ConcurrentSkipListSet<String>    
+- nombresOcupados : ConcurrentSkipListSet\<String>    
 - ServerConfig()
 + static getInstance() : ServerConfig
 + getIp() : String
@@ -115,13 +114,13 @@ los clientes.
 #### Controlador
 - mapa : Mapa
 - servidor : Servidor
-- partidas : ConcurrentHashMap<String, Partida>
-- partidaDeJugador : ConcurrentHashMap<String, String>   // nombre -> código de partida
+- partidas : ConcurrentHashMap\<String, Partida>
+- partidaDeJugador : ConcurrentHashMap\<String, String>   
 - ejecutor : ExecutorService
 - ejecutorMensajes : EjecutorMensajes
 + Controlador(servidor : Servidor)
 + ejecutarMensaje(msg : MensajeJugador) : void
-+ actualizarEstado(datos : HashMap<String, Datos>) : void
++ actualizarEstado(datos : HashMap\<String, Datos>) : void
 + enviar(nombre : String, msg : MensajeServidor) : void
 + enviarATodos(msg : MensajeServidor) : void
 + crearJuego(nickname : String) : String
@@ -132,13 +131,17 @@ los clientes.
 
 
 
-#### EjecutorMensajes   ()
-- manejadores : Map<TipoMensaje, ManejadorMensaje>
+#### EjecutorMensajes 
+- manejadores : Map\<TipoMensaje, ManejadorMensaje>
 - controlador : Controlador
 + EjecutorMensajes(controlador : Controlador)
 + registrar(manejador : ManejadorMensaje) : void
 + ejecutar(msg : MensajeJugador) : void
 - registrarPorDefecto() : void
+
+//Contexto del patron strategy
+
+//Siguen el patron de strategy, unicamente se aplica ejecutar con la clase de contexto, no importa cuantos tipos de mensajes existan.
 
 #### ManejadorMensaje (interface)
 + getTipo() : TipoMensaje
@@ -175,24 +178,30 @@ los clientes.
 - cafes : ArrayList\<Cafe>
 - banderas : ArrayList\<Bandera>
 - ejecutor : ExecutorService
+- eventosPendientes : ConcurrentLinkedQueue\<Evento> 
 - notificador : Notificador
 - inicio : long
 + run() : void
-+ mandarAtaque(A : int[], B : int[])
++ getCodigo() : String
++ agregarJugador(nickname : String) : boolean
 + crearJuego() : boolean
 + iniciarPartida() : boolean
-+ actualizar(Datos) : void
-+ notificar(Datos) : void
-+ recibirDato(mensaje : Mensaje) : void
-+ finalizar(Jugador ganador) : boolea
++ seleccionarEspecie(nombre : String, especie : TipoEspecie) : void
++ moverAnimales(nombre : String, animales : List\<int[]>, idNodoDestino : int) : void
++ mandarAtaque(nombre : String, A : int[], B : int[]) : void
++ verZona(nombre : String, idZona : int) : void
++ registrarEvento(evento : Evento) : void
++ notificar(datos : HashMap\<String, Datos>) : void
++ finalizar(ganador : Jugador) : boolean
 - asignarZonas() : void
 - crearBanderas() : void
 - crearAnimales() : void
 - crearCafes() : void
-- filtrarZona(Jugador jugador) : Zona
-- ejecutarDato(Jugador jugador, Mensaje mensaje) : void
-- obtenerDatos(Jugador jugador) : DatosJugador
+- filtrarZona(jugador : Jugador) : Zona
+- obtenerDatos(jugador : Jugador) : Datos
+- construirDatos() : HashMap\<String, Datos>
 
+//eventos: eventos que sucedieron antes de notificar.
 // El cliente al elegir un animal se elige el animal como {idPack, idDelAnimal} y lo mismo para el enemigo por lo 
 tanto eso es el int[]
 
@@ -200,11 +209,13 @@ tanto eso es el int[]
 - partida : Partida
 - ultimoAtaque : long
 - moverse() : void
+- activo : boolean
 + run () : void
++ detener() : void
 + getPartida() : Partida
-+ getUltimoAtaque() : long
-+ agregarUltimoAtaque(long milis) : void
-+ reinciarAtaque() : void
++ decidir(ahora : long) : void 
+- moverse(ahora : long) : void
+- atacar(ahora : long) : void
 
 #### ThreadJugador (extender ThreadAnimal)
 - animal : Jugador
@@ -215,6 +226,7 @@ tanto eso es el int[]
 + detener() : void
 - moverse() : void
 - atacar() : void
++ decidir(ahora : long) : void 
 + agregarAtaque(idJugador : int[], idEnemigo : int[]) : void 
 - verificarBandera() : boolean
 
@@ -225,6 +237,9 @@ tanto eso es el int[]
 - activo : boolean
 + run() : void
 + detener() : void
+- moverse() : void
+- atacar() : void
++ decidir(ahora : long) : void 
 - buscarSiguienteRuta() : void
 - intentarAtacar() : boolean
 
@@ -232,6 +247,8 @@ tanto eso es el int[]
 partida.
 //El bot cambia de ruta despues de una cantidad determinada
 de movimientos
+
+//  Patron strategy:
 
 #### EstrategiaBot (interface)
 + elegirDestino(Bot bot, Partida partida) : Ruta
@@ -299,6 +316,7 @@ de movimientos
 - botsEliminados : int
 + elegirZona(zona : Zona) : void
 + sumarCafe() : void
++ sumarBotEliminado() : void
 
 #### Bot (extends Pack)
 - estrategia : EstrategiaBot
@@ -433,32 +451,6 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + STATE_UPDATE
 + GAME_OVER
 
-// Inicio
-// PRIMER_MENSAJE, servidor -> cliente en el PRIMER_MENSAJE se indica de si hubo una conexion exitosa, si se rechaza y las razones, 
-// INDICAR_NOMBRE cliente -> servidor, se manda con un nombre.
-
-// Pantalla de selección de partidas
-// CREATE_MATCH cliente -> servidor
-// JOIN_MATCH cliente -> servidor
-
-// Juego
-// SELECT_ANIMAL cliente -> servidor
-// MOVE_ANIMALS cliente -> servidor
-// ATTACK cliente -> servidor
-// VIEW_ZONE cliente -> servidor
-// MATCH_CREATED Server → Client
-// ANIMAL_SELECTION Server → Client
-// MATCH_JOINED Server → Client
-// GAME_STARTED Server → Client
-// STATE_UPDATE Server → Client
-// GAME_OVER cliente -> servidor
-
-// General
-// ERROR: Server → Client indicaria que paso algo con el procedimiento actual; solo se usa si el cliente puede hacer algo, en caso de desconexion eso se 
-maneja con excepciones desde el socket.
-
- 
-
 ### mensajes
 
 #### TipoMensaje (enum)
@@ -505,7 +497,7 @@ maneja con excepciones desde el socket.
 // Agrupa todos los mensajes servidor -> cliente.
 
 
-// ===================== Cliente -> Servidor =====================
+//Cliente -> Servidor 
 
 #### MensajeIndicarNombre (extends MensajeJugador)
 + MensajeIndicarNombre(nombre : String)
@@ -562,12 +554,12 @@ maneja con excepciones desde el socket.
 // tipo = VIEW_ZONE
 
 
-// ===================== Servidor -> Cliente =====================
+//Servidor -> Cliente 
 
 #### MensajePrimerMensaje (extends MensajeServidor)
 - exito : boolean
 - razon : String
-+ MensajePrimerMensaje(nombre : String, exito : boolean, razon : String)
++ MensajePrimerMensaje(exito : boolean, razon : String)
 + isExito() : boolean
 + getRazon() : String
 
@@ -576,7 +568,7 @@ maneja con excepciones desde el socket.
 
 #### MensajeMatchCreated (extends MensajeServidor)
 - codigo : String
-+ MensajeMatchCreated(nombre : String, codigo : String)
++ MensajeMatchCreated(codigo : String)
 + getCodigo() : String
 
 // tipo = MATCH_CREATED
@@ -584,7 +576,7 @@ maneja con excepciones desde el socket.
 #### MensajeMatchJoined (extends MensajeServidor)
 - codigo : String
 - jugadores : List\<String>
-+ MensajeMatchJoined(nombre : String, codigo : String, jugadores : List\<String>)
++ MensajeMatchJoined(¿codigo : String, jugadores : List\<String>)
 + getCodigo() : String
 + getJugadores() : List\<String>
 
@@ -593,7 +585,7 @@ maneja con excepciones desde el socket.
 #### MensajeAnimalSelection (extends MensajeServidor)
 - especiesDisponibles : List\<TipoEspecie>
 - seleccionOponente : TipoEspecie
-+ MensajeAnimalSelection(nombre : String, especiesDisponibles : List\<TipoEspecie>), especieE : TipoEspecie) 
++ MensajeAnimalSelection(especiesDisponibles : List\<TipoEspecie>), especieE : TipoEspecie) 
 + getEspeciesDisponibles() : List\<TipoEspecie>
 + getSeleccionOponente() : TipoEspecie
 
@@ -601,7 +593,7 @@ maneja con excepciones desde el socket.
 
 #### MensajeGameStarted (extends MensajeServidor)
 - datos : Datos
-+ MensajeGameStarted(nombre : String, datos : Datos)
++ MensajeGameStarted(datos : Datos)
 + getDatos() : Datos
 
 // tipo = GAME_STARTED
@@ -609,7 +601,7 @@ maneja con excepciones desde el socket.
 
 #### MensajeStateUpdate (extends MensajeServidor)
 - datos : Datos
-+ MensajeStateUpdate(nombre : String, datos : Datos)
++ MensajeStateUpdate(datos : Datos)
 + getDatos() : Datos
 
 // tipo = STATE_UPDATE
@@ -617,27 +609,18 @@ maneja con excepciones desde el socket.
 
 #### MensajeGameOver (extends MensajeServidor)
 - ganador : String
-+ MensajeGameOver(nombre : String, ganador : String)
++ MensajeGameOver(ganador : String)
 + getGanador() : String
 
 // tipo = GAME_OVER
 
 #### MensajeError (extends MensajeServidor)
 - descripcion : String
-+ MensajeError(nombre : String, descripcion : String)
++ MensajeError(descripcion : String)
 + getDescripcion() : String
 
 // tipo = ERROR
 // Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
-
-
-
-
-
-
-
-
-
 
 
 ## Cliente
@@ -719,7 +702,7 @@ src/
 - nickname : String // nombre del jugador local
 - codigoPartida : String // código
 - zonaActualVisible : int // ID de la zona que el jugador está viendo
-- animalesLocales : List<Animal> // Lista de animales del paquete del jugador
+- animalesLocales : List\<Animal> // Lista de animales del paquete del jugador
 + GameModel()
 + actualizarEstado(datos : Datos) : void // sincroniza el estado local 
 + getZonaActualVisible() : int
@@ -743,7 +726,7 @@ src/
 + SelectionManager()
 + seleccionar(animal : Animal) : void
 + deseleccionarTodo() : void
-+ getSeleccionados() : List<Animal>
++ getSeleccionados() : List\<Animal>
 
 // controla la selección de elementos mediante clics del usuario en la interfaz para mandar órdenes luego
 
