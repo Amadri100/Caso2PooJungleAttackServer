@@ -1153,6 +1153,7 @@ src/
 - zonaActualVisible : int
 - datos : Datos
 - animalesLocales : List\<Animal>
+- animalesConocidos : Map\<String, Animal>
 - ganador : String
 - ultimoError : String
 + GameModel()
@@ -1167,6 +1168,8 @@ src/
 + getJugadorLocal() : Jugador
 + getOponente() : Jugador
 + getAnimalesLocales() : List\<Animal>
++ getEnergiaConocida(idPack : int) : int
++ getVivosConocidos(idPack : int) : int
 + getGanador() : String
 + getUltimoError() : String
 + getZonaActualVisible() : int
@@ -1182,6 +1185,7 @@ src/
 + onDesconexion() : void
 + reiniciarPartida() : void
 - notificar(tipo : TipoMensaje) : void
+- recordarAnimales(datos : Datos) : void
 
 // Estado del juego en el cliente
 // El argumento de notifyObservers es el TipoMensaje que originó el cambio, así las vistas saben qué cambió.
@@ -1199,6 +1203,7 @@ src/
 + getEntidadesDisponibles() : List\<Entidad>
 + getZonaActual() : Zona
 + getEventos() : List\<Evento>
++ getAnimalesVisibles() : List\<Animal>
 
 #### Jugador
 - id : int
@@ -1407,11 +1412,13 @@ src/
 - controlador : GameController
 - timer : javax.swing.Timer
 - limites : Rectangle2D.Double
-- eventosActivos : Map\<String, Long>
+- eventosActivos : Map\<Evento, Long>
+- ultimoDatos : Datos
 + GamePanel(model : GameModel, controlador : GameController)
 + paintComponent(g : Graphics) : void
 + mousePressed(e : MouseEvent) : void
 - calcularLimites() : void
+- registrarEventosNuevos() : void
 - mundoAPantalla(p : Punto) : Point2D
 - pantallaAMundo(x : int, y : int) : Punto
 - animalEn(x : int, y : int) : Animal
