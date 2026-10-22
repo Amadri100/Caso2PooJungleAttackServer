@@ -2,10 +2,13 @@
 Codigo de partida: 4 caracteres alfanumericos, case-insensitive.
 Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 ## Spec Server
-
+```
 ### main
 #### Main
 + main(String args[]) : static void 
+
+// Orden de arranque:
+// Logger -> GeneradorAleatorio ->Servidor -> Ventana -> Servidor.iniciar()
 
 ### utilidades
 
@@ -38,11 +41,88 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + NOMBRE_UNIVERSAL : static final String
 + MOVIMIENTOS_MINIMOS_CAMBIAR : static final int
 + INTERVALO_STATE_UPDATE_MS : static final long
++ LOG_FILE : static final String                  
++ SEED_POR_DEFECTO : static final long
++ INTERVALO_REFRESCO_UI_MS : static final int      
++ MAX_LINEAS_CONSOLA : static final int            
++ MAX_HISTORIAL_LOG : static final int             
 - Constantes()
 
 // Las constantes de este archivo no seran modificadas, por lo tanto no es necesario usar un singleton.
 // Ip = "localhost", que es la ip de el dispositvo
 // NOMBRE_UNIVERSAL string como @Todos, reservado especificamente para referirse a todos los clientes.
+
+#### GeneradorAleatorio (singleton)
+- static instancia : GeneradorAleatorio
+- seed : long
+- seedFija : boolean
+- random : Random                     
+- streams : ConcurrentHashMap\<String, Random>   
+- GeneradorAleatorio()
++ static getInstance() : GeneradorAleatorio
++ seedAleatoria() : void
++ setSeed(seed : long) : void           
++ getSeed() : long
++ setSeedFija(fija : boolean) : void  
++ isSeedFija() : boolean
++ reiniciar() : void                  
++ nextInt(limite : int) : int
++ nextInt(min : int, max : int) : int    
++ nextDouble() : double
++ nextBoolean() : boolean
++ elegir(lista : List\<T>) : T
++ mezclar(lista : List\<T>) : void
++ generarCodigo() : String 
+
+#### NivelLog (enum)
++ DEBUG
++ INFO
++ WARN
++ ERROR
+
+#### EntradaLog
+- momento : LocalDateTime
+- nivel : NivelLog
+- origen : String          
+- mensaje : String
++ EntradaLog(momento : LocalDateTime, nivel : NivelLog, origen : String, mensaje : String)
++ getMomento() : LocalDateTime
++ getNivel() : NivelLog
++ getOrigen() : String
++ getMensaje() : String
++ formatear() : String     
+
+
+#### LogListener (interface)
++ onLog(entrada : EntradaLog) : void
+
+#### Logger (singleton)
+- static instancia : Logger
+- archivo : Path
+- escritor : BufferedWriter
+- listeners : CopyOnWriteArrayList\<LogListener>
+- historial : ArrayDeque\<EntradaLog>        
+- nivelMinimo : NivelLog
+- lock : ReentrantLock
+- Logger()
++ static getInstance() : Logger
++ iniciar(ruta : String) : void              
++ cerrar() : void                            
++ setNivelMinimo(nivel : NivelLog) : void
++ getNivelMinimo() : NivelLog
++ agregarListener(listener : LogListener) : void
++ removerListener(listener : LogListener) : void
++ getHistorial() : List\<EntradaLog>         
++ log(nivel : NivelLog, origen : String, mensaje : String) : void
++ debug(origen : String, mensaje : String) : void
++ info(origen : String, mensaje : String) : void
++ warn(origen : String, mensaje : String) : void
++ error(origen : String, mensaje : String, causa : Throwable) : void
+- escribirEnArchivo(entrada : EntradaLog) : void
+- notificarListeners(entrada : EntradaLog) : void
+
+// listener es "notificado" y recibe el texto del logger
+
 
 ### server
 #### ClientHandler (implements Runnable)
@@ -88,7 +168,7 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 + mandarACliente(nombre : String, msg : MensajeServidor) : void
 + mandarATodos(msg : MensajeServidor) : void
 + mandarASistema(msg : MensajeJugador) : void
- 
+ + getCantidadClientes() : int
  
 // Se manda el mensaje segun el nombre que esta asociado al dato, si tiene el NOMBRE_UNIVERSAL, se manda ese mismo mensaje a todos
 los clientes.
@@ -128,7 +208,8 @@ los clientes.
 + getPartidaDe(nombre : String) : Partida
 + finalizarPartida(codigo : String) : void
 + jugadorDesconectado(nombre : String) : void
-
++ getResumenesPartidas() : List\<ResumenPartida>
++ getCantidadPartidas() : int
 
 
 #### EjecutorMensajes 
@@ -148,17 +229,24 @@ los clientes.
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 
 #### ManejadorCreateMatch (implements ManejadorMensaje)
++ getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 #### ManejadorJoinMatch (implements ManejadorMensaje)
++ getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 #### ManejadorSelectAnimal (implements ManejadorMensaje)
++ getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 #### ManejadorMoveAnimals (implements ManejadorMensaje)
++ getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 #### ManejadorAttack (implements ManejadorMensaje)
++ getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 #### ManejadorViewZone (implements ManejadorMensaje)
++ getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
+
 
 ### logica
 
@@ -169,7 +257,7 @@ los clientes.
 + TERMINADA
 
 #### Partida (implements Runnable)
-- controlado: Controlador
+- controlador : Controlador
 - codigo : String
 - estado : EstadoPartida
 - jugadores : ArrayList\<Jugador>
@@ -178,11 +266,14 @@ los clientes.
 - cafes : ArrayList\<Cafe>
 - banderas : ArrayList\<Bandera>
 - ejecutor : ExecutorService
-- eventosPendientes : ConcurrentLinkedQueue\<Evento> 
-- notificador : Notificador
+- eventosPendientes : ConcurrentLinkedQueue\<Evento>
+- notificador : Notificador                      
 - inicio : long
+- ganador : String
++ Partida(controlador : Controlador, codigo : String)
 + run() : void
 + getCodigo() : String
++ getEstado() : EstadoPartida
 + agregarJugador(nickname : String) : boolean
 + crearJuego() : boolean
 + iniciarPartida() : boolean
@@ -193,6 +284,7 @@ los clientes.
 + registrarEvento(evento : Evento) : void
 + notificar(datos : HashMap\<String, Datos>) : void
 + finalizar(ganador : Jugador) : boolean
++ getResumen() : ResumenPartida
 - asignarZonas() : void
 - crearBanderas() : void
 - crearAnimales() : void
@@ -201,14 +293,39 @@ los clientes.
 - obtenerDatos(jugador : Jugador) : Datos
 - construirDatos() : HashMap\<String, Datos>
 
-//eventos: eventos que sucedieron antes de notificar.
+//eventosPendientes: eventos que sucedieron antes de notificar.
 // El cliente al elegir un animal se elige el animal como {idPack, idDelAnimal} y lo mismo para el enemigo por lo 
 tanto eso es el int[]
+// getResumen() construye un ResumenPartida bajo sincronizacion corta (copia de datos basicos).
+
+#### ResumenPartida
+- codigo : String
+- estado : EstadoPartida
+- jugadores : List\<ResumenJugador>
+- botsVivos : int
+- botsTotales : int
+- cafesRestantes : int
+- duracionMs : long
+- ganador : String
++ ResumenPartida(codigo : String, estado : EstadoPartida, jugadores : List\<ResumenJugador>, botsVivos : int, botsTotales : int, cafesRestantes : int, duracionMs : long, ganador : String)
++ getCodigo() : String
++ getEstado() : EstadoPartida
++ getJugadores() : List\<ResumenJugador>
++ getBotsVivos() : int
++ getBotsTotales() : int
++ getCafesRestantes() : int
++ getDuracionMs() : long
++ getGanador() : String
+
+#### Notificador
+- partida : Partida
++ Notificador(partida : Partida)
++ enviarDatos(datos : HashMap\<String, Datos>) : void
++ enviarFin(ganador : String) : void
 
 #### ThreadAnimal (Abstract implements Runnable)
 - partida : Partida
 - ultimoAtaque : long
-- moverse() : void
 - activo : boolean
 + run () : void
 + detener() : void
@@ -219,7 +336,6 @@ tanto eso es el int[]
 
 #### ThreadJugador (extender ThreadAnimal)
 - animal : Jugador
-- activo : boolean
 - ataquesPendientes : List\<int[][]>
 + run() : void
 + setObjetivo(Animal objetivo) : void
@@ -234,7 +350,6 @@ tanto eso es el int[]
 
 #### ThreadBot (implements Runnable) 
 - bot : Bot
-- activo : boolean
 + run() : void
 + detener() : void
 - moverse() : void
@@ -269,7 +384,6 @@ de movimientos
 // Va a cualquier nodo
 
 #### SelectorEstrategia
-- random : Random
 + elegir() : EstrategiaBot
 
 #### TipoEntidad (enum)
@@ -290,11 +404,14 @@ de movimientos
 - energia : int
 - ruta : Ruta
 - zonaActual : Zona
++ getPack() : Pack
++ getEnergia() : int
 + setRuta(ruta : Ruta) : void
 + getRuta() : Ruta
++ getZonaActual() : Zona
 + recibirDamage(cantidad : int) : void
 + estaVivo() : boolean
-+ moverse() : boolean 
++ moverse() : boolean
 
 #### Pack (abstract)
 - id : int
@@ -302,9 +419,12 @@ de movimientos
 - especie : Especie
 - damage : int
 - conteoDeBajas : int
-+ atacar(jugador : id) : int
++ getId() : int
++ atacar(idEnemigo : int[]) : int
 + getLista() : List\<Animal>
 + getZonasAnimales() : ArrayList\<Zona>
++ getVivos() : int
++ getEnergiaTotal() : int
 + agregarBotEliminado() : void
 
 // si atacar() devuelve -1 significa que no se ejecuto
@@ -314,9 +434,13 @@ de movimientos
 - zonaElegida : Zona
 - cafesConsumidos : int
 - botsEliminados : int
+- conectado : boolean
++ getNickname() : String
 + elegirZona(zona : Zona) : void
 + sumarCafe() : void
 + sumarBotEliminado() : void
++ isConectado() : boolean
++ setConectado(conectado : boolean) : void
 
 #### Bot (extends Pack)
 - estrategia : EstrategiaBot
@@ -342,6 +466,10 @@ de movimientos
 - tipo : TipoEvento
 - origen : Posicion
 - destino : Posicion
++ Evento(tipo : TipoEvento, origen : Posicion, destino : Posicion)
++ getTipo() : TipoEvento
++ getOrigen() : Posicion
++ getDestino() : Posicion
 
 #### Datos:
 - jugadorA : Jugador
@@ -349,7 +477,11 @@ de movimientos
 - entidadesDisponibles : List\<Entidad>
 - zonaActual : Zona
 - evento : List\<Eventos> 
-
++ getJugadorA() : Jugador
++ getJugadorB() : Jugador
++ getEntidadesDisponibles() : List\<Entidad>
++ getZonaActual() : Zona
++ getEventos() : List\<Evento>
 
 #### TipoEspecie (enum)
 + JAGUAR
@@ -377,6 +509,10 @@ de movimientos
 #### Ruta 
 - nodos : List\<Nodo>
 - nodoActual : int
++ getNodos() : List\<Nodo>
++ getNodoActual() : Nodo
++ avanzar() : boolean
++ haTerminado() : boolean
 
 #### Mapa (singleton)
 - zonas : List\<Zona>
@@ -433,24 +569,6 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 
 ### mensajes
 
-#### TipoMensaje (enum)
-+ PRIMER_MENSAJE
-+ INDICAR_NOMBRE
-+ CREATE_MATCH
-+ JOIN_MATCH
-+ SELECT_ANIMAL
-+ MOVE_ANIMALS
-+ ATTACK
-+ VIEW_ZONE
-+ MATCH_CREATED 
-+ ANIMAL_SELECTION
-+ MATCH_JOINED 
-+ ERROR
-+ ANIMAL_SELECTION
-+ GAME_STARTED
-+ STATE_UPDATE
-+ GAME_OVER
-
 ### mensajes
 
 #### TipoMensaje (enum)
@@ -474,7 +592,6 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 - tipo : TipoMensaje
 + Mensaje(tipo : TipoMensaje, nombre : String)
 + getTipo() : TipoMensaje
-
 
 // Clase base de todos los mensajes.
 // nombre es el cliente asociado al mensaje: remitente si va cliente -> servidor,
@@ -622,7 +739,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 // tipo = ERROR
 // Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
 
-
+```
 ## Cliente
 Sujeto a cambios...
 //
