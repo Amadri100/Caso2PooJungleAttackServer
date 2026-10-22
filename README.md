@@ -1,6 +1,7 @@
 ## Generalidades
 Codigo de partida: 4 caracteres alfanumericos, case-insensitive.
-Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
+Se utilizo java 21 con Maven, Jackson, jsvg y JUnit5
+
 ## Spec Server
 
 ### main
@@ -295,7 +296,7 @@ los clientes.
 - ejecutorMensajes : EjecutorMensajes
 + Controlador(servidor : Servidor)
 + ejecutarMensaje(msg : MensajeJugador) : void
-+ actualizarEstado(datos : HashMap\<String, Datos>) : void
++ actualizarEstado(datos : HashMap\<String, DatosEnviar>) : void
 + enviar(nombre : String, msg : MensajeServidor) : void
 + enviarATodos(msg : MensajeServidor) : void
 + crearJuego(nickname : String) : String
@@ -342,6 +343,152 @@ los clientes.
 + getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 
+ ### enviables
+
+//Datos enviados por mensaje con modificaciones para que no de errores
+
+ #### DatosEnviar 
+- jugadorA : JugadorEnviar
+- jugadorB : JugadorEnviar
+- entidadesDisponibles : List\<EntidadEnviar>
+- zonaActual : ZonaEnviar
+- eventos : List\<EventoEnviar>
++ DatosEnviar(jugadorA : JugadorEnviar, jugadorB : JugadorEnviar, entidadesDisponibles : List\<EntidadEnviar>, zonaActual : ZonaEnviar, eventos : List\<EventoEnviar>)
++ static desde(datos : Datos) : DatosEnviar
++ getJugadorA() : JugadorEnviar
++ getJugadorB() : JugadorEnviar
++ getEntidadesDisponibles() : List\<EntidadEnviar>
++ getZonaActual() : ZonaEnviar
++ getEventos() : List\<EventoEnviar>
+
+// Reemplaza a Datos en MensajeGameStarted y MensajeStateUpdate.
+// desde(): jugadorB puede ser null (el oponente aún no está). Las listas se copian a listas nuevas inmutables (List.copyOf).
+// El campo se llama "eventos" (no "evento"), igual que el cliente.
+// Se debe llamar dentro del lock de Partida (snapshot consistente), ver comentarios finales.
+
+#### JugadorEnviar 
+- id : int
+- nickname : String
+- especie : TipoEspecie
+- animales : List\<AnimalEnviar>
+- cafesConsumidos : int
+- botsEliminados : int
+- conectado : boolean
++ JugadorEnviar(id : int, nickname : String, especie : TipoEspecie, animales : List\<AnimalEnviar>, cafesConsumidos : int, botsEliminados : int, conectado : boolean)
++ static desde(jugador : Jugador, zonaVisible : Zona) : JugadorEnviar
++ getId() : int
++ getNickname() : String
++ getEspecie() : TipoEspecie
++ getAnimales() : List\<AnimalEnviar>
++ getCafesConsumidos() : int
++ getBotsEliminados() : int
++ isConectado() : boolean
+
+// id = jugador.getId() (idPack del Pack).
+// especie = jugador.getEspecie().getTipo(), o TipoEspecie.NINGUNA si todavía no eligió.
+// desde(): solo incluye los animales (vivos o muertos) cuyo getZonaActual() == zonaVisible. Así el rival no filtra animales de zonas que el jugador no ve.
+// No se envían: zonaElegida, damage, conteoDeBajas ni el objeto Especie.
+
+#### EntidadEnviar (abstract)
+- id : int
+- tipo : TipoEntidad
+- posicion : PosicionEnviar
++ EntidadEnviar(id : int, tipo : TipoEntidad, posicion : PosicionEnviar)
++ static desde(entidad : Entidad) : EntidadEnviar
++ getId() : int
++ getTipo() : TipoEntidad
++ getPosicion() : PosicionEnviar
+
+// Polimorfismo con las mismas anotaciones que Entidad del cliente:
+//   @JsonTypeInfo(use = Id.NAME, include = As.EXISTING_PROPERTY, property = "tipo", visible = true)
+//   @JsonSubTypes({ @Type(value = AnimalEnviar.class, name = "ANIMAL"), @Type(value = CafeEnviar.class, name = "CAFE"), @Type(value = BanderaEnviar.class, name = "BANDERA") })
+// desde() despacha según el tipo: Animal -> AnimalEnviar.desde(), Cafe -> CafeEnviar.desde(), Bandera -> BanderaEnviar.desde().
+// Si la entidad es de un tipo desconocido lanza IllegalArgumentException.
+// El campo "tipo" es el discriminador: no se debe renombrar.
+
+#### AnimalEnviar (extends EntidadEnviar)
+- idPack : int
+- especie : TipoEspecie
+- energia : int
++ AnimalEnviar(id : int, posicion : PosicionEnviar, idPack : int, especie : TipoEspecie, energia : int)
++ static desde(animal : Animal) : AnimalEnviar
++ getIdPack() : int
++ getEspecie() : TipoEspecie
++ getEnergia() : int
+
+// tipo = TipoEntidad.ANIMAL (fijo en el constructor).
+// idPack = animal.getPack().getId(). especie = animal.getPack().getEspecie().getTipo().
+// No se envían: pack, ruta ni zonaActual (ciclos y datos pesados).
+
+#### CafeEnviar (extends EntidadEnviar)
+- consumido : boolean
++ CafeEnviar(id : int, posicion : PosicionEnviar, consumido : boolean)
++ static desde(cafe : Cafe) : CafeEnviar
++ isConsumido() : boolean
+
+// tipo = TipoEntidad.CAFE. consumido = !cafe.estaDisponible().
+
+#### BanderaEnviar 
+ 
+- idJugador : int
+- color : String
++ BanderaEnviar(id : int, posicion : PosicionEnviar, idJugador : int, color : String)
++ static desde(bandera : Bandera) : BanderaEnviar
++ getIdJugador() : int
++ getColor() : String
+
+// tipo = TipoEntidad.BANDERA. idJugador = bandera.getJugador().getId() (idPack del dueño).
+// No se envía el objeto Jugador (ciclo Jugador -> animales -> ...).
+
+#### EventoEnviar 
+- tipo : TipoEvento
+- origen : PosicionEnviar
+- destino : PosicionEnviar
++ EventoEnviar(tipo : TipoEvento, origen : PosicionEnviar, destino : PosicionEnviar)
++ static desde(evento : Evento) : EventoEnviar
++ getTipo() : TipoEvento
++ getOrigen() : PosicionEnviar
++ getDestino() : PosicionEnviar
+
+// Los eventos de Partida.eventosPendientes se copian aquí al construir los datos; después se vacía la cola.
+
+#### ZonaEnviar
+- id : int
+- nodos : List\<NodoEnviar>
++ ZonaEnviar(id : int, nodos : List\<NodoEnviar>)
++ static desde(zona : Zona) : ZonaEnviar
++ getId() : int
++ getNodos() : List\<NodoEnviar>
+
+// Requiere Zona.getId() en el dominio (campo nuevo, asignado en Mapa.crearZonas()).
+// No se envía Zona.mapa.
+// La zona es estática: se puede crear una sola vez por zona y reutilizarla (ver comentarios finales).
+
+#### NodoEnviar
+- id : int
+- posicion : Punto
+- idZona : int
++ NodoEnviar(id : int, posicion : Punto, idZona : int)
++ static desde(nodo : Nodo) : NodoEnviar
++ getId() : int
++ getPosicion() : Punto
++ getIdZona() : int
+
+// idZona = nodo.getZona().getId(). Rompe el ciclo Nodo <-> Zona.
+
+#### PosicionEnviar 
+- nodo : NodoEnviar
+- punto : Punto
++ PosicionEnviar(nodo : NodoEnviar, punto : Punto)
++ static desde(posicion : Posicion) : PosicionEnviar
++ getNodo() : NodoEnviar
++ getPunto() : Punto
+
+// nodo puede ser null si la entidad está en pleno recorrido entre nodos.
+// El nodo va como NodoEnviar liviano (id, posicion, idZona), sin la zona ni sus demás nodos.
+// punto se copia (Punto es inmutable), así no cambia mientras Jackson lo escribe.
+// Se cambia el tipo de Datos a DatosEnviar. En el cliente la clase sigue llamándose Datos: Jackson solo mira los nombres de los campos.
+
 
 ### logica
 
@@ -377,7 +524,7 @@ los clientes.
 + mandarAtaque(nombre : String, A : int[], B : int[]) : void
 + verZona(nombre : String, idZona : int) : void
 + registrarEvento(evento : Evento) : void
-+ notificar(datos : HashMap\<String, Datos>) : void
++ notificar(datos : HashMap\<String, DatosEnviar>) : void
 + finalizar(ganador : Jugador) : boolean
 + getResumen() : ResumenPartida
 - asignarZonas() : void
@@ -385,8 +532,8 @@ los clientes.
 - crearAnimales() : void
 - crearCafes() : void
 - filtrarZona(jugador : Jugador) : Zona
-- obtenerDatos(jugador : Jugador) : Datos
-- construirDatos() : HashMap\<String, Datos>
+- obtenerDatos(jugador : Jugador) : DatosEnviar
+- construirDatos() : HashMap\<String, DatosEnviar>
 
 //eventosPendientes: eventos que sucedieron antes de notificar.
 // El cliente al elegir un animal se elige el animal como {idPack, idDelAnimal} y lo mismo para el enemigo por lo 
@@ -415,7 +562,7 @@ tanto eso es el int[]
 #### Notificador
 - partida : Partida
 + Notificador(partida : Partida)
-+ enviarDatos(datos : HashMap\<String, Datos>) : void
++ enviarDatos(datos : HashMap\<String, DatosEnviar>) : void
 + enviarFin(ganador : String) : void
 
 #### ThreadAnimal (Abstract implements Runnable)
@@ -490,9 +637,11 @@ de movimientos
 - id : int
 - tipo : TipoEntidad
 - posicion : Posicion
++ Entidad(id : int, tipo : TipoEntidad, posicion : Posicion) : void
 + getPosicion() : Posicion
 + setPosicion(posicion : Posicion) : void
 + distanciaCon(otra : Entidad) : double
++ getEnviable() : EntidadEnviar
 
 #### Animal (abstract, extends Entidad)
 - pack : Pack
@@ -507,6 +656,7 @@ de movimientos
 + recibirDamage(cantidad : int) : void
 + estaVivo() : boolean
 + moverse() : boolean
++ getEnviable() : AnimalEnviar
 
 #### Pack (abstract)
 - id : int
@@ -521,6 +671,7 @@ de movimientos
 + getVivos() : int
 + getEnergiaTotal() : int
 + agregarBotEliminado() : void
+
 
 // si atacar() devuelve -1 significa que no se ejecuto
 
@@ -548,11 +699,13 @@ de movimientos
 - consumido : boolean
 + consumir() : boolean
 + estaDisponible() : boolean
++ getEnviable() : CafeEnviar
 
 #### Bandera (extends Entidad)
 - jugador : Jugador
 - color : String
 + fueTocadaPor(Animal animal) : boolean
++ getEnviable() : BanderaEnviar
 
 #### TipoEvento (enum)
 + ATAQUE
@@ -565,6 +718,7 @@ de movimientos
 + getTipo() : TipoEvento
 + getOrigen() : Posicion
 + getDestino() : Posicion
++ getEnviable() : EventoEnviar
 
 #### Datos:
 - jugadorA : Jugador
@@ -577,6 +731,7 @@ de movimientos
 + getEntidadesDisponibles() : List\<Entidad>
 + getZonaActual() : Zona
 + getEventos() : List\<Evento>
++ getEnviable() : DatosEnviar
 
 #### TipoEspecie (enum)
 + JAGUAR
@@ -597,6 +752,7 @@ de movimientos
 + seguirRuta(ruta : Ruta) : boolean
 + setPunto(punto : Punto) : void
 + getPunto() : Punto
++ getEnviable() : PosicionEnviar
 
 // El punto es la posición real en el plano
 // Permite seguir la ruta y moverse segun la configuracion
@@ -638,6 +794,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + getMapa() : Map
 + agregarNodo(Nodo) : void
 + contiene(Nodo) : boolean
++ getEnviable() : ZonaEnviar
 
 #### Nodo
 - id : int
@@ -649,6 +806,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + getZona() : Zona
 + equals(Object) : boolean
 + hashCode() : int
++ getEnviable() : NodoEnviar
 
 #### Vecinos
 - nodoA : Nodo
@@ -801,16 +959,16 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 // tipo = ANIMAL_SELECTION
 
 #### MensajeGameStarted (extends MensajeServidor)
-- datos : Datos
-+ MensajeGameStarted(datos : Datos)
+- datos : DatosEnviar
++ MensajeGameStarted(datos : DatosEnviar)
 + getDatos() : Datos
 
 // tipo = GAME_STARTED
 // datos = estado inicial visible para ese jugador.
 
 #### MensajeStateUpdate (extends MensajeServidor)
-- datos : Datos
-+ MensajeStateUpdate(datos : Datos)
+- datos : DatosEnviar
++ MensajeStateUpdate(datos : DatosEnviar)
 + getDatos() : Datos
 
 // tipo = STATE_UPDATE
@@ -1025,15 +1183,9 @@ src/
 + reiniciarPartida() : void
 - notificar(tipo : TipoMensaje) : void
 
-// Almacena lo que el servidor reporta. Cada método on... guarda los datos y llama a notificar(), que hace setChanged() + notifyObservers(tipo).
+// Estado del juego en el cliente
 // El argumento de notifyObservers es el TipoMensaje que originó el cambio, así las vistas saben qué cambió.
-// Para la desconexión se notifica ERROR con ultimoError = "Conexión perdida".
-// onPrimerMensaje() solo asigna nombreConfirmado = exito. Si no hay éxito, ultimoError = razon.
-// actualizarEstado() y onGameStarted() reemplazan el snapshot completo: datos, zonaActualVisible = datos.getZonaActual().getId(),
-// y animalesLocales = lista de animales de getJugadorLocal().
-// getJugadorLocal() compara el nickname con jugadorA.getNickname() / jugadorB.getNickname(). getOponente() es el otro.
-// reiniciarPartida() limpia datos, codigoPartida, ganador y selección (se llama tras GAME_OVER para volver al menú).
-// GameModel no se (de)serializa con Jackson: es estado de la aplicación, no del protocolo.
+// reiniciarPartida() se ejecuta despues de que la partida termine
 
 #### Datos
 - jugadorA : Jugador
@@ -1047,11 +1199,6 @@ src/
 + getEntidadesDisponibles() : List\<Entidad>
 + getZonaActual() : Zona
 + getEventos() : List\<Evento>
-
-// Espejo del snapshot enviado en GAME_STARTED y STATE_UPDATE. Solo se deserializa, nunca se envía.
-// jugadorB puede ser null si el oponente todavía no está en la partida.
-// entidadesDisponibles son las entidades de la zona visible (animales, cafés y banderas) y se distinguen por Entidad.tipo.
-// El nombre del campo JSON debe ser "eventos" (no "evento"): Jackson mapea por el nombre del campo.
 
 #### Jugador
 - id : int
@@ -1214,7 +1361,6 @@ src/
 
 // Controla la selección de animales por clic del usuario.
 // getIdsSeleccionados() devuelve los int[]{idPack, idAnimal} listos para MensajeMoveAnimals.
-// sincronizar(): cada STATE_UPDATE crea objetos Animal nuevos, así que se vuelve a mapear la selección por idCompuesto y se descartan muertos o fuera de zona.
 // Solo se pueden seleccionar animales vivos del jugador local.
 
 #### GameController
@@ -1238,15 +1384,6 @@ src/
 - nombreValido(nickname : String) : boolean
 - codigoValido(codigo : String) : boolean
 
-// Único punto por el que la vista envía órdenes al servidor.
-// conectar(): valida el nickname (no vacío, distinto de Constants.NOMBRE_UNIVERSAL), crea ServerConnection, lanza su hilo y envía MensajeIndicarNombre.
-//   Devuelve false si la conexión falla. La respuesta PRIMER_MENSAJE llega por el dispatcher.
-// unirsePartida(): valida el código (longitud Constants.LONGITUD_CODIGO, alfanumérico) y lo manda en mayúsculas.
-// moverSeleccion(): envía MensajeMoveAnimals con seleccion.getIdsSeleccionados(). No hace nada si no hay selección.
-// atacar(): envía un MensajeAttack por cada animal seleccionado, con atacante = animal.getIdCompuesto() y enemigo = enemigo.getIdCompuesto().
-// verZona(): envía MensajeViewZone.
-// enviar(): asigna msg.setNombre(model.getNickname()) antes de serializar, para que todos los mensajes salgan con el remitente correcto.
-
 ### vista
 
 #### MainWindow (extends JFrame, implements Observer)
@@ -1265,19 +1402,6 @@ src/
 - mostrarSeleccionEspecie() : void
 - mostrarMensaje(texto : String) : void
 
-// Ventana principal en Swing. Pantallas del CardLayout: "ESPERA" (partida creada/unida, esperando al rival) y "JUEGO" (GamePanel + HUDPanel).
-// Login, menú, selección de especie y mensajes usan JOptionPane (ver comentarios finales).
-// update() recibe el TipoMensaje que notifica GameModel (siempre en el hilo de Swing):
-//   PRIMER_MENSAJE   -> si exito, mostrarMenuPrincipal(); si no, muestra la razón y vuelve a pedirConexion()
-//   MATCH_CREATED    -> muestra el código de la partida y pasa a "ESPERA"
-//   MATCH_JOINED     -> actualiza la lista de jugadores en "ESPERA"
-//   ANIMAL_SELECTION -> mostrarSeleccionEspecie() y envía SELECT_ANIMAL con controlador.seleccionarEspecie()
-//   GAME_STARTED     -> mostrarPantalla("JUEGO")
-//   STATE_UPDATE     -> repaint del GamePanel y HUDPanel
-//   GAME_OVER        -> muestra el ganador, model.reiniciarPartida() y vuelve al menú
-//   ERROR            -> mostrarMensaje(model.getUltimoError())
-// main(): crea GameModel, MessageDispatcher, GameController y MainWindow dentro de SwingUtilities.invokeLater().
-
 #### GamePanel (extends JPanel, implements MouseListener)
 - model : GameModel
 - controlador : GameController
@@ -1295,16 +1419,6 @@ src/
 - dibujarZona(g : Graphics2D) : void
 - dibujarEntidades(g : Graphics2D) : void
 - dibujarEventos(g : Graphics2D) : void
-
-// Dibuja los nodos de datos.getZonaActual() y las entidades (animales, cafés, banderas) con ImageCache.
-// timer repinta cada 1000/UIConstants.FPS ms.
-// calcularLimites(): bounding box de los nodos de la zona, con UIConstants.MARGEN_MAPA_PX, para convertir coordenadas del mundo a pantalla.
-// Clic izquierdo sobre un animal propio: lo selecciona (Ctrl para sumar a la selección). Clic izquierdo sobre vacío: deselecciona.
-// Clic derecho sobre un nodo: controlador.moverSeleccion(nodo.getId()).
-// Clic derecho sobre un animal enemigo: controlador.atacar(enemigo).
-// dibujarEventos(): cada Evento de datos.getEventos() se identifica con una llave String (tipo + origen + destino); si la llave no está en eventosActivos
-//   se guarda con el instante actual. Se dibuja y se elimina pasada DURACION_EVENTO_MS. (Jackson crea objetos Evento nuevos en cada snapshot, por eso no se usa el objeto como llave.)
-// Los animales seleccionados se resaltan con un círculo; los muertos no se dibujan.
 
 #### HUDPanel (extends JPanel, implements Observer)
 - model : GameModel
@@ -1335,8 +1449,6 @@ src/
 + getImagen(key : String) : BufferedImage
 
 // Caché global de imágenes y texturas para no leer disco repetidamente.
-// Claves: TipoEspecie.name() para cada animal, "CAFE", "CAFE_CONSUMIDO" y "BANDERA".
-// Si falta una imagen, getImagen() devuelve un cuadro de color de reemplazo, para que el cliente funcione aun sin recursos.
 
 #### Json
 - static mapper : ObjectMapper
@@ -1524,3 +1636,172 @@ src/
 
 // tipo = ERROR
 
+### mensajes
+
+#### TipoMensaje (enum)
++ PRIMER_MENSAJE
++ INDICAR_NOMBRE
++ CREATE_MATCH
++ JOIN_MATCH
++ SELECT_ANIMAL
++ MOVE_ANIMALS
++ ATTACK
++ VIEW_ZONE
++ MATCH_CREATED
++ MATCH_JOINED
++ ANIMAL_SELECTION
++ GAME_STARTED
++ STATE_UPDATE
++ GAME_OVER
++ ERROR
+
+#### Mensaje (abstract)
+- tipo : TipoMensaje
++ Mensaje(tipo : TipoMensaje, nombre : String)
++ getTipo() : TipoMensaje
+
+// Clase base de todos los mensajes.
+// nombre es el cliente asociado al mensaje: remitente si va cliente -> servidor,
+// destinatario si va servidor -> cliente.
+// Si nombre es Constantes.NOMBRE_UNIVERSAL (@Todos), el servidor lo manda a todos los clientes.
+// Cada subclase concreta fija su propio tipo en el constructor, por eso no lo recibe.
+// Json.jsonAMensaje() lee el campo tipo y deserializa a la subclase concreta correspondiente.
+
+
+#### MensajeJugador (abstract, extends Mensaje)
+- nombre : String
++ MensajeJugador(tipo : TipoMensaje, nombre : String)
++ getNombre() : String
++ setNombre(nombre : String) : void
+// Agrupa todos los mensajes cliente -> servidor..
+
+#### MensajeServidor (abstract, extends Mensaje)
++ MensajeServidor(tipo : TipoMensaje)
+
+// Agrupa todos los mensajes servidor -> cliente.
+
+
+//Cliente -> Servidor 
+
+#### MensajeIndicarNombre (extends MensajeJugador)
++ MensajeIndicarNombre(nombre : String)
+
+// tipo = INDICAR_NOMBRE
+// Solo usa el nombre heredado.
+
+#### MensajeCreateMatch (extends MensajeJugador)
++ MensajeCreateMatch(nombre : String)
+
+// tipo = CREATE_MATCH
+// Sin payload.
+
+#### MensajeJoinMatch (extends MensajeJugador)
+- codigo : String
++ MensajeJoinMatch(nombre : String, codigo : String)
++ getCodigo() : String
+
+// tipo = JOIN_MATCH
+
+#### MensajeSelectAnimal (extends MensajeJugador)
+- especie : TipoEspecie
++ MensajeSelectAnimal(nombre : String, especie : TipoEspecie)
++ getEspecie() : TipoEspecie
+
+// tipo = SELECT_ANIMAL
+
+#### MensajeMoveAnimals (extends MensajeJugador)
+- animales : List\<int[]>
+- idNodoDestino : int
++ MensajeMoveAnimals(nombre : String, animales : List\<int[]>, idNodoDestino : int)
++ getAnimales() : List\<int[]>
++ getIdNodoDestino() : int
+
+// tipo = MOVE_ANIMALS
+// Cada animal se identifica como int[]{idPack, idAnimal}.
+// El servidor calcula la ruta con Mapa.getRuta().
+
+#### MensajeAttack (extends MensajeJugador)
+- atacante : int[]
+- enemigo : int[]
++ MensajeAttack(nombre : String, atacante : int[], enemigo : int[])
++ getAtacante() : int[]
++ getEnemigo() : int[]
+
+// tipo = ATTACK
+// Mismo formato que Partida.mandarAtaque(A, B): int[]{idPack, idAnimal}.
+
+#### MensajeViewZone (extends MensajeJugador)
+- idZona : int
++ MensajeViewZone(nombre : String, idZona : int)
++ getIdZona() : int
+
+// tipo = VIEW_ZONE
+
+
+//Servidor -> Cliente 
+
+#### MensajePrimerMensaje (extends MensajeServidor)
+- exito : boolean
+- razon : String
++ MensajePrimerMensaje(exito : boolean, razon : String)
++ isExito() : boolean
++ getRazon() : String
+
+// tipo = PRIMER_MENSAJE
+// razon indica por qué se rechazó la conexión (null si exito es true).
+
+#### MensajeMatchCreated (extends MensajeServidor)
+- codigo : String
++ MensajeMatchCreated(codigo : String)
++ getCodigo() : String
+
+// tipo = MATCH_CREATED
+
+#### MensajeMatchJoined (extends MensajeServidor)
+- codigo : String
+- jugadores : List\<String>
++ MensajeMatchJoined(¿codigo : String, jugadores : List\<String>)
++ getCodigo() : String
++ getJugadores() : List\<String>
+
+// tipo = MATCH_JOINED
+
+#### MensajeAnimalSelection (extends MensajeServidor)
+- especiesDisponibles : List\<TipoEspecie>
+- seleccionOponente : TipoEspecie
++ MensajeAnimalSelection(especiesDisponibles : List\<TipoEspecie>), especieE : TipoEspecie) 
++ getEspeciesDisponibles() : List\<TipoEspecie>
++ getSeleccionOponente() : TipoEspecie
+
+// tipo = ANIMAL_SELECTION
+
+#### MensajeGameStarted (extends MensajeServidor)
+- datos : DatosEnviar
++ MensajeGameStarted(datos : DatosEnviar)
++ getDatos() : Datos
+
+// tipo = GAME_STARTED
+// datos = estado inicial visible para ese jugador.
+
+#### MensajeStateUpdate (extends MensajeServidor)
+- datos : DatosEnviar
++ MensajeStateUpdate(datos : DatosEnviar)
++ getDatos() : Datos
+
+// tipo = STATE_UPDATE
+// datos = estado actual visible para ese jugador.
+
+#### MensajeGameOver (extends MensajeServidor)
+- ganador : String
++ MensajeGameOver(ganador : String)
++ getGanador() : String
+
+// tipo = GAME_OVER
+
+#### MensajeError (extends MensajeServidor)
+- descripcion : String
++ MensajeError(descripcion : String)
++ getDescripcion() : String
+
+// tipo = ERROR
+// Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
