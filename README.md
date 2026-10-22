@@ -4,8 +4,6 @@ Se utilizo java 21 con Maven, Jackson, jsvg y JUnit5
 
 ## Spec Server
 
-### test
-
 ### main
 #### Main
 + main(String args[]) : static void 
@@ -126,8 +124,6 @@ Se utilizo java 21 con Maven, Jackson, jsvg y JUnit5
 
 // listener es "notificado" y recibe el texto del logger
 
-#### MainUtilidades
-+ main(String args[]) : static void 
 
 ### ui
 
@@ -347,11 +343,7 @@ los clientes.
 + getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 
-
-#### MainServer
-+ main(String args[]) : static void 
-
-### enviables
+ ### enviables
 
 //Datos enviados por mensaje con modificaciones para que no de errores
 
@@ -751,9 +743,6 @@ de movimientos
 + MONO_CO_BLA
 + NINGUNA
 
-#### MainLogica
-+ main(String args[]) : static void 
-
 ### mapa
 
 #### Posicion
@@ -830,9 +819,6 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + formaParte(Nodo) : boolean
 + getOtro(Nodo) : Nodo
 
-#### MainMapa
-+ main(String args[]) : static void 
-
 ### mensajes
 
 #### TipoMensaje (enum)
@@ -854,7 +840,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 
 #### Mensaje (abstract)
 - tipo : TipoMensaje
-+ Mensaje(tipo : TipoMensaje)
++ Mensaje(tipo : TipoMensaje, nombre : String)
 + getTipo() : TipoMensaje
 
 // Clase base de todos los mensajes.
@@ -1003,8 +989,69 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 // tipo = ERROR
 // Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
 
+## Spec Server Test
+
+### JsonTest
++ mensajeAJson_createMatch_generaUnaSolaLinea() : void
++ roundTrip_todosLosTiposDeMensaje_conservanCampos() : void
++ jsonAMensaje_tipoDesconocido_lanzaIllegalArgumentException() : void
++ jsonAMensaje_camposExtra_losIgnora() : void
++ roundTrip_gameStartedConEntidadPolimorfica_resuelveAnimalCafeBandera() : void
+
+// El round trip se ejecuta una vez por cada valor de `TipoMensaje` (`@EnumSource`).
+
+### MapaTest
++ getInstance_siempreLaMismaInstancia() : void
++ getZonas_devuelveTOTAL_ZONES() : void
++ vecinos_sonSimetricos() : void
++ getRuta_nodosEnDistintaZona_rutaConexa() : void
++ getRuta_esLaMasCorta_verificadaConDijkstraManual() : void
++ posicion_seguirRuta_avanzaConVelocidadConstante() : void
++ posicion_seguirRuta_conDeltaTimeGrande_noSobrepasaElDestino() : void
+
+// Valida la regla de movimiento: solo por caminos, velocidad constante y ruta entre zonas.
+
+### PartidaTest
+Configuración:
++ agregarJugador_tercerJugador_devuelveFalse() : void
++ seleccionarEspecie_mismaEspecieDeLosDosJugadores_seRechaza() : void
++ iniciarPartida_creaSietePacks_dosJugadoresYCincoBots() : void
++ iniciarPartida_packsEnSieteZonasDistintas() : void
++ iniciarPartida_diezCafesColocados() : void
+
+Combate:
++ ataque_restaDamageDelPack_alObjetivo() : void
++ ataque_energiaLlegaACero_animalMuere() : void
++ ataque_antesDelCooldown_noSeEjecuta_devuelveMenosUno() : void
++ ejemploEnunciado_animal20EnergiaVsBot4x10_muereEn5s_yMataUnBot() : void
+
+Bonificaciones:
++ cafe_incrementaDamageDeTodoElPack_yseConsumeUnaSolaVez() : void
++ botsEliminados_cadaDos_suman1Energia_sinSuperarMAX_PLAYER_ENERGY() : void
+
+Victoria y visibilidad:
++ bandera_tocadaPorRival_terminaPartidaYDeclaraGanador() : void
++ verZona_sinAnimalesEnLaZona_seRechaza() : void
++ construirDatos_noIncluyeEntidadesDeZonasNoVisibles() : void
+
+// Se usa seed fija y se avanza el tiempo con `ahora` explícito. Si los hilos de `Partida` dificultan la prueba, se ejercita `decidir(ahora)` directamente.
+
+### ControladorTest
++ crearJuego_devuelveCodigoDeLongitudCorrecta() : void
++ crearJuego_codigosUnicosEntrePartidasActivas() : void
++ unirsePartida_codigoInexistente_devuelveFalse() : void
++ unirsePartida_codigoEnMinusculas_funcionaCaseInsensitive() : void
++ unirsePartida_partidaLlena_devuelveFalse() : void
++ jugadorDesconectado_elOtroJugadorGana() : void
++ finalizarPartida_laRemueveDelMapa() : void
+
+// `Servidor` falso (stub/Mockito) que guarda los mensajes enviados.
+// Decisión documentada: si un jugador se desconecta, el rival gana.
 
 ## Spec Cliente
+
+ 
+
  
 ```
 src/
@@ -1513,6 +1560,171 @@ src/
 + Mensaje(tipo : TipoMensaje)
 + getTipo() : TipoMensaje
 
+// Clase base de todos los mensajes. Cada subclase fija su tipo en el constructor.
+// El campo tipo está anotado con @JsonIgnore: no aparece dentro de "payload".
+// El campo "nombre" vive solo en MensajeJugador; los mensajes de servidor no lo tienen, el servidor decide el destinatario con mandarACliente(nombre, msg).
+
+#### MensajeJugador (abstract, extends Mensaje)
+- nombre : String
++ MensajeJugador(tipo : TipoMensaje, nombre : String)
++ getNombre() : String
++ setNombre(nombre : String) : void
+
+// Agrupa todos los mensajes cliente -> servidor. Solo se serializan en el cliente.
+
+#### MensajeServidor (abstract, extends Mensaje)
++ MensajeServidor(tipo : TipoMensaje)
+
+// Agrupa todos los mensajes servidor -> cliente. Solo se deserializan en el cliente.
+
+//Cliente -> Servidor
+
+#### MensajeIndicarNombre (extends MensajeJugador)
++ MensajeIndicarNombre(nombre : String)
+
+// tipo = INDICAR_NOMBRE. Primer mensaje que debe enviar el cliente.
+
+#### MensajeCreateMatch (extends MensajeJugador)
++ MensajeCreateMatch(nombre : String)
+
+// tipo = CREATE_MATCH. Sin campos propios; el payload solo lleva "nombre".
+
+#### MensajeJoinMatch (extends MensajeJugador)
+- codigo : String
++ MensajeJoinMatch(nombre : String, codigo : String)
++ getCodigo() : String
+
+// tipo = JOIN_MATCH
+
+#### MensajeSelectAnimal (extends MensajeJugador)
+- especie : TipoEspecie
++ MensajeSelectAnimal(nombre : String, especie : TipoEspecie)
++ getEspecie() : TipoEspecie
+
+// tipo = SELECT_ANIMAL
+
+#### MensajeMoveAnimals (extends MensajeJugador)
+- animales : List\<int[]>
+- idNodoDestino : int
++ MensajeMoveAnimals(nombre : String, animales : List\<int[]>, idNodoDestino : int)
++ getAnimales() : List\<int[]>
++ getIdNodoDestino() : int
+
+// tipo = MOVE_ANIMALS. Cada animal se identifica como int[]{idPack, idAnimal}. El servidor calcula la ruta.
+
+#### MensajeAttack (extends MensajeJugador)
+- atacante : int[]
+- enemigo : int[]
++ MensajeAttack(nombre : String, atacante : int[], enemigo : int[])
++ getAtacante() : int[]
++ getEnemigo() : int[]
+
+// tipo = ATTACK. Formato int[]{idPack, idAnimal}.
+
+#### MensajeViewZone (extends MensajeJugador)
+- idZona : int
++ MensajeViewZone(nombre : String, idZona : int)
++ getIdZona() : int
+
+// tipo = VIEW_ZONE
+
+//Servidor -> Cliente
+// Todos los mensajes de este bloque declaran además un constructor privado sin argumentos que llama a super(TIPO_CORRESPONDIENTE); es el que usa Jackson.
+
+#### MensajePrimerMensaje (extends MensajeServidor)
+- exito : boolean
+- razon : String
+- MensajePrimerMensaje()
++ MensajePrimerMensaje(exito : boolean, razon : String)
++ isExito() : boolean
++ getRazon() : String
+
+// tipo = PRIMER_MENSAJE. razon es null si exito es true.
+
+#### MensajeMatchCreated (extends MensajeServidor)
+- codigo : String
+- MensajeMatchCreated()
++ MensajeMatchCreated(codigo : String)
++ getCodigo() : String
+
+// tipo = MATCH_CREATED
+
+#### MensajeMatchJoined (extends MensajeServidor)
+- codigo : String
+- jugadores : List\<String>
+- MensajeMatchJoined()
++ MensajeMatchJoined(codigo : String, jugadores : List\<String>)
++ getCodigo() : String
++ getJugadores() : List\<String>
+
+// tipo = MATCH_JOINED
+
+#### MensajeAnimalSelection (extends MensajeServidor)
+- especiesDisponibles : List\<TipoEspecie>
+- seleccionOponente : TipoEspecie
+- MensajeAnimalSelection()
++ MensajeAnimalSelection(especiesDisponibles : List\<TipoEspecie>, seleccionOponente : TipoEspecie)
++ getEspeciesDisponibles() : List\<TipoEspecie>
++ getSeleccionOponente() : TipoEspecie
+
+// tipo = ANIMAL_SELECTION. seleccionOponente es NINGUNA si el rival todavía no eligió.
+
+#### MensajeGameStarted (extends MensajeServidor)
+- datos : Datos
+- MensajeGameStarted()
++ MensajeGameStarted(datos : Datos)
++ getDatos() : Datos
+
+// tipo = GAME_STARTED
+
+#### MensajeStateUpdate (extends MensajeServidor)
+- datos : Datos
+- MensajeStateUpdate()
++ MensajeStateUpdate(datos : Datos)
++ getDatos() : Datos
+
+// tipo = STATE_UPDATE
+
+#### MensajeGameOver (extends MensajeServidor)
+- ganador : String
+- MensajeGameOver()
++ MensajeGameOver(ganador : String)
++ getGanador() : String
+
+// tipo = GAME_OVER
+
+#### MensajeError (extends MensajeServidor)
+- descripcion : String
+- MensajeError()
++ MensajeError(descripcion : String)
++ getDescripcion() : String
+
+// tipo = ERROR
+
+### mensajes
+
+#### TipoMensaje (enum)
++ PRIMER_MENSAJE
++ INDICAR_NOMBRE
++ CREATE_MATCH
++ JOIN_MATCH
++ SELECT_ANIMAL
++ MOVE_ANIMALS
++ ATTACK
++ VIEW_ZONE
++ MATCH_CREATED
++ MATCH_JOINED
++ ANIMAL_SELECTION
++ GAME_STARTED
++ STATE_UPDATE
++ GAME_OVER
++ ERROR
+
+#### Mensaje (abstract)
+- tipo : TipoMensaje
++ Mensaje(tipo : TipoMensaje, nombre : String)
++ getTipo() : TipoMensaje
+
 // Clase base de todos los mensajes.
 // nombre es el cliente asociado al mensaje: remitente si va cliente -> servidor,
 // destinatario si va servidor -> cliente.
@@ -1658,3 +1870,44 @@ src/
 
 // tipo = ERROR
 // Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
+
+## Spec Cliente Test
+
+### JsonTest
++ mensajeAJson_envuelveEnTypeYPayload_enUnaSolaLinea() : void
++ jsonAMensaje_typeDesconocido_lanzaIllegalArgumentException() : void
++ jsonAMensaje_payloadNoEncaja_lanzaIllegalArgumentException() : void
++ roundTrip_todosLosTiposDeMensaje() : void
++ deserializar_entidadAnimalCafeBandera_resuelveSubtipoPorTipo() : void
++ deserializar_posicionConNodoNull_noFalla() : void
+
+// Contrato cliente-servidor: guardar en `src/test/resources` un JSON de `DatosEnviar` generado por el servidor y comprobar que el cliente lo deserializa.
+
+### MessageDispatcherTest
++ despachar_matchCreated_invocaOnMatchCreated() : void
++ despachar_gameStarted_invocaOnGameStarted() : void
++ despachar_stateUpdate_invocaActualizarEstado() : void
++ despachar_gameOver_invocaOnGameOver() : void
++ despachar_jsonInvalido_noLanzaExcepcion_ni_tocaElModelo() : void
++ despachar_mensajeClienteAServidor_seDescarta() : void
++ conexionPerdida_invocaOnDesconexion() : void
+
+// Se espera el `invokeLater` con `SwingUtilities.invokeAndWait` vacío, o se inyecta un ejecutor. El modelo es un spy de `GameModel` que registra las llamadas.
+
+### GameModelTest
++ onPrimerMensaje_exitoTrue_nombreConfirmado() : void
++ onPrimerMensaje_exitoFalse_guardaRazonComoUltimoError() : void
++ onMatchJoined_guardaCodigoYJugadores() : void
++ onGameStarted_guardaDatos_yZonaVisibleInicial() : void
++ actualizarEstado_recuerdaAnimalesConocidos() : void
++ getJugadorLocal_identificaPorNickname() : void
++ reiniciarPartida_limpiaElEstado_peroConservaNickname() : void
++ cadaCambio_notificaObservadoresConElTipoMensajeCorrecto() : void
+
+### SelectionManagerTest
++ seleccionar_animalVivoLocal_seAgrega() : void
++ seleccionar_animalMuerto_seRechaza() : void
++ seleccionar_animalDeOtroJugador_seRechaza() : void
++ seleccionar_dosVeces_noDuplica() : void
++ getIdsSeleccionados_devuelveIdPackEIdAnimal() : void
++ sincronizar_quitaAnimalesQueYaNoEstanVivosONiVigentes() : void
