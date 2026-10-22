@@ -4,6 +4,8 @@ Se utilizo java 21 con Maven, Jackson, jsvg y JUnit5
 
 ## Spec Server
 
+### test
+
 ### main
 #### Main
 + main(String args[]) : static void 
@@ -124,6 +126,8 @@ Se utilizo java 21 con Maven, Jackson, jsvg y JUnit5
 
 // listener es "notificado" y recibe el texto del logger
 
+#### MainUtilidades
++ main(String args[]) : static void 
 
 ### ui
 
@@ -343,7 +347,11 @@ los clientes.
 + getTipo() : TipoMensaje
 + ejecutar(msg : MensajeJugador, controlador : Controlador) : void
 
- ### enviables
+
+#### MainServer
++ main(String args[]) : static void 
+
+### enviables
 
 //Datos enviados por mensaje con modificaciones para que no de errores
 
@@ -743,6 +751,9 @@ de movimientos
 + MONO_CO_BLA
 + NINGUNA
 
+#### MainLogica
++ main(String args[]) : static void 
+
 ### mapa
 
 #### Posicion
@@ -819,6 +830,9 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + formaParte(Nodo) : boolean
 + getOtro(Nodo) : Nodo
 
+#### MainMapa
++ main(String args[]) : static void 
+
 ### mensajes
 
 #### TipoMensaje (enum)
@@ -840,7 +854,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 
 #### Mensaje (abstract)
 - tipo : TipoMensaje
-+ Mensaje(tipo : TipoMensaje, nombre : String)
++ Mensaje(tipo : TipoMensaje)
 + getTipo() : TipoMensaje
 
 // Clase base de todos los mensajes.
@@ -991,9 +1005,6 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 
 
 ## Spec Cliente
-
- 
-
  
 ```
 src/
@@ -1500,171 +1511,6 @@ src/
 #### Mensaje (abstract)
 - tipo : TipoMensaje
 + Mensaje(tipo : TipoMensaje)
-+ getTipo() : TipoMensaje
-
-// Clase base de todos los mensajes. Cada subclase fija su tipo en el constructor.
-// El campo tipo está anotado con @JsonIgnore: no aparece dentro de "payload".
-// El campo "nombre" vive solo en MensajeJugador; los mensajes de servidor no lo tienen, el servidor decide el destinatario con mandarACliente(nombre, msg).
-
-#### MensajeJugador (abstract, extends Mensaje)
-- nombre : String
-+ MensajeJugador(tipo : TipoMensaje, nombre : String)
-+ getNombre() : String
-+ setNombre(nombre : String) : void
-
-// Agrupa todos los mensajes cliente -> servidor. Solo se serializan en el cliente.
-
-#### MensajeServidor (abstract, extends Mensaje)
-+ MensajeServidor(tipo : TipoMensaje)
-
-// Agrupa todos los mensajes servidor -> cliente. Solo se deserializan en el cliente.
-
-//Cliente -> Servidor
-
-#### MensajeIndicarNombre (extends MensajeJugador)
-+ MensajeIndicarNombre(nombre : String)
-
-// tipo = INDICAR_NOMBRE. Primer mensaje que debe enviar el cliente.
-
-#### MensajeCreateMatch (extends MensajeJugador)
-+ MensajeCreateMatch(nombre : String)
-
-// tipo = CREATE_MATCH. Sin campos propios; el payload solo lleva "nombre".
-
-#### MensajeJoinMatch (extends MensajeJugador)
-- codigo : String
-+ MensajeJoinMatch(nombre : String, codigo : String)
-+ getCodigo() : String
-
-// tipo = JOIN_MATCH
-
-#### MensajeSelectAnimal (extends MensajeJugador)
-- especie : TipoEspecie
-+ MensajeSelectAnimal(nombre : String, especie : TipoEspecie)
-+ getEspecie() : TipoEspecie
-
-// tipo = SELECT_ANIMAL
-
-#### MensajeMoveAnimals (extends MensajeJugador)
-- animales : List\<int[]>
-- idNodoDestino : int
-+ MensajeMoveAnimals(nombre : String, animales : List\<int[]>, idNodoDestino : int)
-+ getAnimales() : List\<int[]>
-+ getIdNodoDestino() : int
-
-// tipo = MOVE_ANIMALS. Cada animal se identifica como int[]{idPack, idAnimal}. El servidor calcula la ruta.
-
-#### MensajeAttack (extends MensajeJugador)
-- atacante : int[]
-- enemigo : int[]
-+ MensajeAttack(nombre : String, atacante : int[], enemigo : int[])
-+ getAtacante() : int[]
-+ getEnemigo() : int[]
-
-// tipo = ATTACK. Formato int[]{idPack, idAnimal}.
-
-#### MensajeViewZone (extends MensajeJugador)
-- idZona : int
-+ MensajeViewZone(nombre : String, idZona : int)
-+ getIdZona() : int
-
-// tipo = VIEW_ZONE
-
-//Servidor -> Cliente
-// Todos los mensajes de este bloque declaran además un constructor privado sin argumentos que llama a super(TIPO_CORRESPONDIENTE); es el que usa Jackson.
-
-#### MensajePrimerMensaje (extends MensajeServidor)
-- exito : boolean
-- razon : String
-- MensajePrimerMensaje()
-+ MensajePrimerMensaje(exito : boolean, razon : String)
-+ isExito() : boolean
-+ getRazon() : String
-
-// tipo = PRIMER_MENSAJE. razon es null si exito es true.
-
-#### MensajeMatchCreated (extends MensajeServidor)
-- codigo : String
-- MensajeMatchCreated()
-+ MensajeMatchCreated(codigo : String)
-+ getCodigo() : String
-
-// tipo = MATCH_CREATED
-
-#### MensajeMatchJoined (extends MensajeServidor)
-- codigo : String
-- jugadores : List\<String>
-- MensajeMatchJoined()
-+ MensajeMatchJoined(codigo : String, jugadores : List\<String>)
-+ getCodigo() : String
-+ getJugadores() : List\<String>
-
-// tipo = MATCH_JOINED
-
-#### MensajeAnimalSelection (extends MensajeServidor)
-- especiesDisponibles : List\<TipoEspecie>
-- seleccionOponente : TipoEspecie
-- MensajeAnimalSelection()
-+ MensajeAnimalSelection(especiesDisponibles : List\<TipoEspecie>, seleccionOponente : TipoEspecie)
-+ getEspeciesDisponibles() : List\<TipoEspecie>
-+ getSeleccionOponente() : TipoEspecie
-
-// tipo = ANIMAL_SELECTION. seleccionOponente es NINGUNA si el rival todavía no eligió.
-
-#### MensajeGameStarted (extends MensajeServidor)
-- datos : Datos
-- MensajeGameStarted()
-+ MensajeGameStarted(datos : Datos)
-+ getDatos() : Datos
-
-// tipo = GAME_STARTED
-
-#### MensajeStateUpdate (extends MensajeServidor)
-- datos : Datos
-- MensajeStateUpdate()
-+ MensajeStateUpdate(datos : Datos)
-+ getDatos() : Datos
-
-// tipo = STATE_UPDATE
-
-#### MensajeGameOver (extends MensajeServidor)
-- ganador : String
-- MensajeGameOver()
-+ MensajeGameOver(ganador : String)
-+ getGanador() : String
-
-// tipo = GAME_OVER
-
-#### MensajeError (extends MensajeServidor)
-- descripcion : String
-- MensajeError()
-+ MensajeError(descripcion : String)
-+ getDescripcion() : String
-
-// tipo = ERROR
-
-### mensajes
-
-#### TipoMensaje (enum)
-+ PRIMER_MENSAJE
-+ INDICAR_NOMBRE
-+ CREATE_MATCH
-+ JOIN_MATCH
-+ SELECT_ANIMAL
-+ MOVE_ANIMALS
-+ ATTACK
-+ VIEW_ZONE
-+ MATCH_CREATED
-+ MATCH_JOINED
-+ ANIMAL_SELECTION
-+ GAME_STARTED
-+ STATE_UPDATE
-+ GAME_OVER
-+ ERROR
-
-#### Mensaje (abstract)
-- tipo : TipoMensaje
-+ Mensaje(tipo : TipoMensaje, nombre : String)
 + getTipo() : TipoMensaje
 
 // Clase base de todos los mensajes.
