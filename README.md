@@ -1157,23 +1157,43 @@ src/
 - socket : Socket
 - entrada : BufferedReader
 - salida : PrintWriter
-- dispatcher : MessageDispatcher
+- modelo : GameModel 
 - activo : boolean
 + ServerConnection(host : String, puerto : int, dispatcher : MessageDispatcher)
 + run() : void
-+ enviar(json : String) : void
-+ enviar(msg : Mensaje) : void
++ enviar (msg : Mensaje) : void
++ recibirAscender (msg : Mensaje) : void
 + isActivo() : boolean
 + desconectar() : void
 
-#### MessageDispatcher
-- model : GameModel
-+ MessageDispatcher(model : GameModel)
-+ despachar(json : String) : void
-+ conexionPerdida() : void
-- aplicar(msg : MensajeServidor) : void
-
 ### modelo
+
+
+#### AccionDeMensaje
++ static obtenerAccion(msg : Mensaje) : AccionMensaje
+
+//Strategy
+#### AccionMensaje 
+- mensaje : Mensaje
++ ejecutar(model : GameModel) : void
+
+#### AccionMatchCreated (extends AccionMensaje)
++ ejecutar(model : GameModel) : void
+
+#### AccionMatchJoined (extends AccionMensaje)
++ ejecutar(model : GameModel) : void
+
+#### AccionAnimalSelection (extends AccionMensaje)
++ ejecutar(model : GameModel) : void
+
+#### AccionGameStarted (extends AccionMensaje)
++ ejecutar(model : GameModel) : void
+
+#### AccionGameOver (extends AccionMensaje)
++ ejecutar(model : GameModel) : void
+
+#### AccionError (extends AccionMensaje)
++ ejecutar(model : GameModel) : void
 
 #### GameModel (extends Observable)
 - nickname : String
@@ -1186,9 +1206,11 @@ src/
 - datos : Datos
 - animalesLocales : List\<Animal>
 - animalesConocidos : Map\<String, Animal>
+- listaObservers : List\<Observer>
 - ganador : String
 - ultimoError : String
 + GameModel()
++ agregarObserver (o : Observer) : void
 + setNickname(nickname : String) : void
 + getNickname() : String
 + getCodigoPartida() : String
@@ -1207,13 +1229,7 @@ src/
 + getZonaActualVisible() : int
 + setZonaActualVisible(zonaId : int) : void
 + actualizarEstado(datos : Datos) : void
-+ onPrimerMensaje(exito : boolean, razon : String) : void
-+ onMatchCreated(codigo : String) : void
-+ onMatchJoined(codigo : String, jugadores : List\<String>) : void
-+ onAnimalSelection(especies : List\<TipoEspecie>, oponente : TipoEspecie) : void
-+ onGameStarted(datos : Datos) : void
-+ onGameOver(ganador : String) : void
-+ onError(descripcion : String) : void
++ realizarAccion (accion : AccionMensaje) : void
 + onDesconexion() : void
 + reiniciarPartida() : void
 - notificar(tipo : TipoMensaje) : void
@@ -1432,7 +1448,7 @@ src/
 - contenedor : JPanel
 + MainWindow(controlador : GameController)
 + mostrarPantalla(panelName : String) : void
-+ update(o : Observable, arg : Object) : void
++ update(tipo : TipoMensaje) : void
 + static main(args : String[]) : void
 - pedirConexion() : void
 - mostrarMenuPrincipal() : void
@@ -1469,7 +1485,7 @@ src/
 - etiquetaZona : JLabel
 - botonesZona : List\<JButton>
 + HUDPanel(model : GameModel, controlador : GameController)
-+ update(o : Observable, arg : Object) : void
++ update(tipo : TipoMensaje) : void
 - construirUI() : void
 - refrescar() : void
 
@@ -1477,7 +1493,14 @@ src/
 // tazas de café (cafesConsumidos / Constants.TOTAL_COFFEE_CUPS), código de la partida y zona visible.
 // botonesZona: uno por zona (Constants.TOTAL_ZONES). Al pulsar uno se llama controlador.verZona(idZona).
 
+
 ### util
+
+#### Observer
++ update(tipo : TipoMensaje) : void
+#### Observable
++ agregarObserver (o : Observer) : void
++ notificar (tipo : TipoMensaje) : void
 
 #### ImageCache (Patrón Singleton)
 - instancia : static ImageCache
@@ -1493,6 +1516,7 @@ src/
 + mensajeAJson(msg : Mensaje) : Static String
 + jsonAMensaje(json : String) : Static Mensaje
 
+ 
 
 ### mensajes
 
