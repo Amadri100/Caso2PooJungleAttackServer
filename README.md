@@ -760,10 +760,12 @@ src/
     |-- model/
         |-- GameModel.java
         |-- Animal.java
-        |-- Position.java
+        |-- Punto.java
+        |-- Datos.java
     |-- controller/
         |-- SelectionManager.java
-    |-- view/
+        |-- GameController.java
+    |-- screen/
         |-- MainWindow.java
         |-- GamePanel.java
         |-- HUDPanel.java
@@ -781,18 +783,15 @@ src/
 // almacena los parámetros principales de conexión al servidor del juego
 
 ### UIConstants
-+ WINDOW_WIDTH : static final int = ??
-+ WINDOW_HEIGHT : static final int = ??
-+ FPS : static final int = ?? // tasa de refresco 
-+ WINDOW_WIDTH : static final int = 1280
-+ WINDOW_HEIGHT : static final int = 720
-+ FPS : static final int = 30 // Tasa de refresco de la interfaz gráfica
++ WINDOW_WIDTH : static final int 
++ WINDOW_HEIGHT : static final int 
++ FPS : static final int // Tasa de refresco de la interfaz gráfica
 
 // se define las dimensiones de la ventana de Swing y los valores de renderizado
 
 ### NetworkConstants
-+ DEFAULT_PORT : static final int = //
-+ DEFAULT_HOST : static final String = // 
++ DEFAULT_PORT : static final int 
++ DEFAULT_HOST : static final String 
 
 // Valores predeterminados de red 
 
@@ -813,6 +812,7 @@ src/
 - model : GameModel 
 + MessageDispatcher(model : GameModel)
 + despachar(json : String) : void // parsea el JSON recibido a Message y actualiza el modelo usando 
+
 // procesa los mensajes raw que vienen de la red, los deserializa y actualiza el modelo local de forma segura para Swing
 
 ### GameModel (extends Observable) 
@@ -827,6 +827,20 @@ src/
 
 // almacena la información que el servidor reporta y notifica a las vistas
 
+### Datos
+- jugadorA : Jugador
+- jugadorB : Jugador
+- entidadesDisponibles : List\<Entidad>
+- zonaActual : Zona
+- evento : List\<Evento> 
++ getJugadorA() : Jugador
++ getJugadorB() : Jugador
++ getEntidadesDisponibles() : List\<Entidad>
++ getZonaActual() : Zona
++ getEventos() : List\<Evento>
+
+// espejo local del snapshot enviado por el servidor en GAME_STARTED y STATE_UPDATE
+
 ### Animal
 - id : int 
 - especie : String // nombre de la especie 
@@ -838,8 +852,16 @@ src/
 
 / Representa de forma local a un animal del juego, conteniendo su posición, energía y especie para ser renderizado
 
+### Punto 
+- x : double
+- y : double
++ Punto(x : double, y : double) : Punto
++ getX() : double
++ getY() : double
+
+
 ### SelectionManager
-- animalesSeleccionados : // por determinar
+- animalesSeleccionados : List\<Animal>
 + SelectionManager()
 + seleccionar(animal : Animal) : void
 + deseleccionarTodo() : void
@@ -849,18 +871,24 @@ src/
 
 ### MainWindow (extends JFrame)
 - gamePanel : GamePanel 
-- HUDPanel : HUDPanel /
+- HUDPanel : HUDPanel 
 + MainWindow()
 + mostrarPantalla(panelName : String) : void
 
-// ventana principal de la aplicación en Swing que gestiona el cambio entre paneles 
+// ventana principal de la aplicación en Swing que gestiona el cambio entre paneles
+
+#### GamePanel (extends JPanel)
+// dibuja el mapa y los animales 
+
+#### HUDPanel (extends JPanel)
 // HUDPanel de la interfaz de usuario para mostrar estadísticas de juego, tazas de café y barras de vida
 
 ### ImageCache (Patrón Singleton)
 - instancia : static ImageCache
-- imagenes : // por determinar
+- imagenes : Map<String, BufferedImage>
 - ImageCache()
 + static getInstance() : ImageCache
++ getImagen(key : String) : BufferedImage
 + getImagen(key : String) : // por determinar
 
 // Caché global que precarga y almacena en memoria las imágenes y texturas para evitar lecturas de disco que sean de forma repetitiva
