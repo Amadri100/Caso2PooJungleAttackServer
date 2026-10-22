@@ -2,7 +2,7 @@
 Codigo de partida: 4 caracteres alfanumericos, case-insensitive.
 Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 ## Spec Server
-```
+
 ### main
 #### Main
 + main(String args[]) : static void 
@@ -123,6 +123,101 @@ Formato de mensajes (JSON): { "type": TipoMensaje, "payload": {Contenido} }
 
 // listener es "notificado" y recibe el texto del logger
 
+
+### ui
+
+#### VentanaServidor (extends JFrame)
+- controlador : Controlador
+- panelPartidas : PanelPartidas
+- panelConsola : PanelConsola
+- panelControl : PanelControl
+- divisor : JSplitPane
+- timerRefresco : javax.swing.Timer
++ VentanaServidor(controlador : Controlador)
++ iniciarRefresco() : void
++ detenerRefresco() : void
+- construirUI() : void
+- refrescar() : void
+- alCerrar() : void
+
+// refrescar() (cada INTERVALO_REFRESCO_UI_MS): pide los resumenes y los pasa a panelPartidas.actualizar().
+// alCerrar(): detiene el timer, quita el listener del Logger, servidor.detener() y Logger.cerrar().
+// Barra de estado inferior: clientes conectados, partidas activas, seed actual.
+
+#### PanelPartidas (extends JPanel)
+- contenedor : JPanel
+- tarjetas : Map\<String, TarjetaPartida>
+- etiquetaVacio : JLabel
++ PanelPartidas()
++ actualizar(resumenes : List\<ResumenPartida>) : void
+
+#### TarjetaPartida (extends JPanel)
+- codigo : String
+- etiquetaCodigo : JLabel
+- etiquetaEstado : JLabel
+- etiquetaDuracion : JLabel
+- etiquetaBots : JLabel
+- etiquetaCafes : JLabel
+- tablaJugadores : JTable
+- modeloJugadores : ModeloTablaJugadores
++ TarjetaPartida(codigo : String)
++ actualizar(resumen : ResumenPartida) : void
+- colorDeEstado(estado : EstadoPartida) : Color
+
+// ESPERANDO = amarillo, SELECCION = azul, JUGANDO = verde, TERMINADA = gris.
+// etiquetaBots muestra "Bots: vivos/total". etiquetaCafes muestra los cafes restantes.
+// Columnas de la tabla: nickname, especie, animales vivos, energia, cafes, bots eliminados.
+// Si hay ganador, muestra "Ganador: <nickname>". Jugador desconectado se muestra en rojo.
+
+#### ModeloTablaJugadores (extends AbstractTableModel)
+- filas : List\<ResumenJugador>
++ setJugadores(jugadores : List\<ResumenJugador>) : void
++ getRowCount() : int
++ getColumnCount() : int
++ getColumnName(col : int) : String
++ getValueAt(fila : int, col : int) : Object
+
+#### PanelConsola (extends JPanel, implements LogListener)
+- areaTexto : JTextPane
+- scroll : JScrollPane
+- autoScroll : boolean
+- filtroNivel : NivelLog
+- filtroTexto : String
+- lineas : int
++ PanelConsola()
++ onLog(entrada : EntradaLog) : void
++ cargarHistorial(entradas : List\<EntradaLog>) : void
++ limpiar() : void
++ setAutoScroll(activo : boolean) : void
++ setFiltroNivel(nivel : NivelLog) : void
++ setFiltroTexto(texto : String) : void
+- agregarLinea(entrada : EntradaLog) : void
+- recortarSiSobrepasa() : void
+- colorDeNivel(nivel : NivelLog) : Color
+
+// Al crearse se registra con Logger.agregarListener(this) y llama cargarHistorial(Logger.getHistorial()) para mostrar lo ocurrido antes de abrir la ventana.
+// Colores: DEBUG gris, INFO color normal, WARN naranja, ERROR rojo.
+
+#### PanelControl (extends JPanel)
+- campoSeed : JTextField
+- checkSeedFija : JCheckBox
+- botonAplicarSeed : JButton
+- botonSeedAleatoria : JButton
+- comboNivel : JComboBox\<NivelLog>
+- checkAutoScroll : JCheckBox
+- botonLimpiar : JButton
+- campoFiltro : JTextField
+- botonGuardar : JButton
++ PanelControl(panelConsola : PanelConsola)
+- aplicarSeed() : void
+- generarSeedAleatoria() : void
+
+// Barra de herramientas sobre la consola.
+// aplicarSeed(): valida el long, llama GeneradorAleatorio.setSeed(...) y setSeedFija(checkSeedFija).
+// Solo afecta a partidas NUEVAS (las que ya corren conservan su stream); se avisa en el Logger.
+// generarSeedAleatoria(): pone una seed nueva en el campo y en el generador.
+// comboNivel -> Logger.setNivelMinimo y panelConsola.setFiltroNivel.
+// botonGuardar: exporta lo visible en la consola a un archivo elegido con JFileChooser.
 
 ### server
 #### ClientHandler (implements Runnable)
@@ -739,7 +834,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 // tipo = ERROR
 // Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
 
-```
+
 ## Cliente
 Sujeto a cambios...
 //
