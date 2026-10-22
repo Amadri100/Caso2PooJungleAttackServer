@@ -995,7 +995,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 
 // El round trip se ejecuta una vez por cada valor de `TipoMensaje` (`@EnumSource`).
 
-### MapaTest
+#### MapaTest
 + getInstance_siempreLaMismaInstancia() : void
 + getZonas_devuelveTOTAL_ZONES() : void
 + vecinos_sonSimetricos() : void
@@ -1003,35 +1003,36 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + getRuta_esLaMasCorta_verificadaConDijkstraManual() : void
 + posicion_seguirRuta_avanzaConVelocidadConstante() : void
 + posicion_seguirRuta_conDeltaTimeGrande_noSobrepasaElDestino() : void
++ private boolean verificarConectividadZonas(int totalZones)
++ private boolean comprobarSimetriaVecinos(Nodo nodoA, Nodo nodoB)
++ private boolean comprobarVelocidadConstante(Posicion posInicial, Posicion posFinal, double delta)
 
-// Valida la regla de movimiento: solo por caminos, velocidad constante y ruta entre zonas.
-
-### PartidaTest
-Configuración:
+#### PartidaTest
+### Configuración:
 + agregarJugador_tercerJugador_devuelveFalse() : void
 + seleccionarEspecie_mismaEspecieDeLosDosJugadores_seRechaza() : void
 + iniciarPartida_creaSietePacks_dosJugadoresYCincoBots() : void
 + iniciarPartida_packsEnSieteZonasDistintas() : void
 + iniciarPartida_diezCafesColocados() : void
 
-Combate:
+### Combate:
 + ataque_restaDamageDelPack_alObjetivo() : void
 + ataque_energiaLlegaACero_animalMuere() : void
 + ataque_antesDelCooldown_noSeEjecuta_devuelveMenosUno() : void
 + ejemploEnunciado_animal20EnergiaVsBot4x10_muereEn5s_yMataUnBot() : void
 
-Bonificaciones:
+### Bonificaciones:
 + cafe_incrementaDamageDeTodoElPack_yseConsumeUnaSolaVez() : void
 + botsEliminados_cadaDos_suman1Energia_sinSuperarMAX_PLAYER_ENERGY() : void
 
-Victoria y visibilidad:
+### Victoria y visibilidad:
 + bandera_tocadaPorRival_terminaPartidaYDeclaraGanador() : void
 + verZona_sinAnimalesEnLaZona_seRechaza() : void
 + construirDatos_noIncluyeEntidadesDeZonasNoVisibles() : void
 
 // Se usa seed fija y se avanza el tiempo con `ahora` explícito. Si los hilos de `Partida` dificultan la prueba, se ejercita `decidir(ahora)` directamente.
 
-### ControladorTest
+#### ControladorTest
 + crearJuego_devuelveCodigoDeLongitudCorrecta() : void
 + crearJuego_codigosUnicosEntrePartidasActivas() : void
 + unirsePartida_codigoInexistente_devuelveFalse() : void
@@ -1039,6 +1040,8 @@ Victoria y visibilidad:
 + unirsePartida_partidaLlena_devuelveFalse() : void
 + jugadorDesconectado_elOtroJugadorGana() : void
 + finalizarPartida_laRemueveDelMapa() : void
++ private boolean validarLongitudYFormatoCodigo(String codigo)
++ private boolean comprobarUnicidadCodigos(List<String> codigosActivos)
 
 // `Servidor` falso (stub/Mockito) que guarda los mensajes enviados.
 // Decisión documentada: si un jugador se desconecta, el rival gana.
@@ -1870,7 +1873,7 @@ src/
 
 // Se espera el `invokeLater` con `SwingUtilities.invokeAndWait` vacío, o se inyecta un ejecutor. El modelo es un spy de `GameModel` que registra las llamadas.
 
-### GameModelTest
+#### GameModelTest
 + onPrimerMensaje_exitoTrue_nombreConfirmado() : void
 + onPrimerMensaje_exitoFalse_guardaRazonComoUltimoError() : void
 + onMatchJoined_guardaCodigoYJugadores() : void
@@ -1879,11 +1882,13 @@ src/
 + getJugadorLocal_identificaPorNickname() : void
 + reiniciarPartida_limpiaElEstado_peroConservaNickname() : void
 + cadaCambio_notificaObservadoresConElTipoMensajeCorrecto() : void
++ private boolean validarEstadoVisibleZona(int idZona)
 
-### SelectionManagerTest
+#### SelectionManagerTest
 + seleccionar_animalVivoLocal_seAgrega() : void
 + seleccionar_animalMuerto_seRechaza() : void
 + seleccionar_animalDeOtroJugador_seRechaza() : void
 + seleccionar_dosVeces_noDuplica() : void
 + getIdsSeleccionados_devuelveIdPackEIdAnimal() : void
 + sincronizar_quitaAnimalesQueYaNoEstanVivosONiVigentes() : void
++ private boolean isAnimalSeleccionable(Animal animal)
