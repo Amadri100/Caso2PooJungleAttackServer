@@ -16,8 +16,8 @@ Se utilizo java 21 con Maven, Jackson, jsvg y JUnit5
 ### utilidades
 
 #### Json
-+ mensajeAJson(msg : Mensaje) : String
-+ jsonAMensaje(json : String) : Mensaje
++ mensajeAJson(msg : Mensaje) : Static String
++ jsonAMensaje(json : String) : Static Mensaje
 
 #### Punto 
 - x : double
@@ -858,12 +858,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + getTipo() : TipoMensaje
 
 // Clase base de todos los mensajes.
-// nombre es el cliente asociado al mensaje: remitente si va cliente -> servidor,
-// destinatario si va servidor -> cliente.
-// Si nombre es Constantes.NOMBRE_UNIVERSAL (@Todos), el servidor lo manda a todos los clientes.
-// Cada subclase concreta fija su propio tipo en el constructor, por eso no lo recibe.
-// Json.jsonAMensaje() lee el campo tipo y deserializa a la subclase concreta correspondiente.
-
+// Si nombre es Constantes.NOMBRE_UNIVERSAL (@Todos), el servidor lo manda a todos los clientes
 
 #### MensajeJugador (abstract, extends Mensaje)
 - nombre : String
@@ -1124,33 +1119,12 @@ src/
 + isActivo() : boolean
 + desconectar() : void
 
-// Hilo independiente que lee una línea JSON por iteración (readLine) y se la pasa a dispatcher.despachar().
-// enviar() es synchronized y escribe con println + flush, siempre una sola línea por mensaje.
-// enviar(Mensaje) serializa con Json.mensajeAJson(). Si la serialización falla (IllegalStateException), no se envía nada y se imprime por System.err.
-// Si readLine() devuelve null o lanza IOException: activo = false, se cierra el socket y se llama dispatcher.conexionPerdida().
-// El socket se abre en el constructor. Si falla, el constructor lanza IOException y GameController lo informa.
-
 #### MessageDispatcher
 - model : GameModel
 + MessageDispatcher(model : GameModel)
 + despachar(json : String) : void
 + conexionPerdida() : void
 - aplicar(msg : MensajeServidor) : void
-
-// despachar() corre en el hilo de red: convierte el JSON con Json.jsonAMensaje() y, si el mensaje es válido y de tipo servidor -> cliente,
-// delega a aplicar() dentro de SwingUtilities.invokeLater(), así el modelo y las vistas se tocan solo desde el hilo de Swing.
-// Si jsonAMensaje() lanza IllegalArgumentException (JSON inválido, tipo desconocido o payload que no encaja) o el mensaje es de tipo cliente -> servidor,
-// se descarta y se imprime por System.err. Ninguna excepción de parseo debe matar el hilo de red.
-// aplicar() hace un switch sobre getTipo():
-//   PRIMER_MENSAJE    -> model.onPrimerMensaje(exito, razon)
-//   MATCH_CREATED     -> model.onMatchCreated(codigo)
-//   MATCH_JOINED      -> model.onMatchJoined(codigo, jugadores)
-//   ANIMAL_SELECTION  -> model.onAnimalSelection(especiesDisponibles, seleccionOponente)
-//   GAME_STARTED      -> model.onGameStarted(datos)
-//   STATE_UPDATE      -> model.actualizarEstado(datos)
-//   GAME_OVER         -> model.onGameOver(ganador)
-//   ERROR             -> model.onError(descripcion)
-// conexionPerdida() -> model.onDesconexion().
 
 ### modelo
 
@@ -1469,25 +1443,9 @@ src/
 // Caché global de imágenes y texturas para no leer disco repetidamente.
 
 #### Json
-- static mapper : ObjectMapper
-+ static mensajeAJson(msg : Mensaje) : String
-+ static jsonAMensaje(json : String) : Mensaje
-- static crearMapper() : ObjectMapper
-- static claseDe(tipo : TipoMensaje) : Class\<? extends Mensaje>
++ mensajeAJson(msg : Mensaje) : Static String
++ jsonAMensaje(json : String) : Static Mensaje
 
-// Misma API que Json del servidor. Usa Jackson (dependencia a agregar al cliente). ObjectMapper es thread-safe: una única instancia estática compartida por el hilo de red y el de Swing.
-// crearMapper() configura:
-//   setVisibility(PropertyAccessor.ALL, Visibility.NONE) y luego setVisibility(PropertyAccessor.FIELD, Visibility.ANY)  -> solo campos, sin getters/setters
-//   disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)  -> tolera campos extra del servidor
-//   disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)           -> mensajes sin campos propios, como CREATE_MATCH (solo "nombre"), no fallan
-//   NO se activa INDENT_OUTPUT: cada mensaje debe ser una sola línea.
-// mensajeAJson(): construye un ObjectNode con "type" = msg.getTipo().name() y "payload" = mapper.valueToTree(msg), y lo escribe con mapper.writeValueAsString().
-//   La salida es una única línea { "type": ..., "payload": {...} }. JsonProcessingException se envuelve en IllegalStateException.
-// jsonAMensaje(): lee el árbol con mapper.readTree(json), toma "type", obtiene la clase con claseDe() y deserializa "payload" con mapper.treeToValue(payload, clase).
-//   Si "payload" falta o es null se usa un objeto vacío. Si "type" falta o es desconocido, o el payload no encaja, lanza IllegalArgumentException
-//   (envolviendo la JsonProcessingException original como causa).
-// Mensaje.tipo lleva @JsonIgnore: el tipo viaja solo en "type" y el constructor de cada subclase lo vuelve a fijar al deserializar.
-// El polimorfismo de Entidad lo resuelven las anotaciones de Entidad, no hace falta registrar ningún deserializador.
 
 ### mensajes
 
@@ -1514,12 +1472,6 @@ src/
 + getTipo() : TipoMensaje
 
 // Clase base de todos los mensajes.
-// nombre es el cliente asociado al mensaje: remitente si va cliente -> servidor,
-// destinatario si va servidor -> cliente.
-// Si nombre es Constantes.NOMBRE_UNIVERSAL (@Todos), el servidor lo manda a todos los clientes.
-// Cada subclase concreta fija su propio tipo en el constructor, por eso no lo recibe.
-// Json.jsonAMensaje() lee el campo tipo y deserializa a la subclase concreta correspondiente.
-
 
 #### MensajeJugador (abstract, extends Mensaje)
 - nombre : String
