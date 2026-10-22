@@ -661,9 +661,6 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + formaParte(Nodo) : boolean
 + getOtro(Nodo) : Nodo
 
-
-### mensajes
-
 ### mensajes
 
 #### TipoMensaje (enum)
@@ -871,26 +868,31 @@ src/
 ## Spec Cliente
 // TEMP hasta crear el otro proyecto.
 
-### Constants (Clase final)
+### constantes
+
+#### Constants (Clase final)
 + SERVER_IP : static final String
 + SERVER_PORT : static final int
 - Constants()
 // almacena los parámetros principales de conexión al servidor del juego
 
-### UIConstants
+#### UIConstants
 + WINDOW_WIDTH : static final int 
 + WINDOW_HEIGHT : static final int 
 + FPS : static final int // Tasa de refresco de la interfaz gráfica
 
 // se define las dimensiones de la ventana de Swing y los valores de renderizado
 
-### NetworkConstants
+#### NetworkConstants
 + DEFAULT_PORT : static final int 
 + DEFAULT_HOST : static final String 
 
 // Valores predeterminados de red 
 
-### ServerConnection (implements Runnable)
+
+### red
+
+#### ServerConnection (implements Runnable)
 - socket : Socket 
 - entrada : BufferedReader 
 - salida : PrintWriter // escritor para enviar solicitudes JSON
@@ -903,14 +905,17 @@ src/
 
 // hilo independiente que mantiene la comunicación con el servidor, leyendo líneas JSON 
 
-### MessageDispatcher 
+#### MessageDispatcher 
 - model : GameModel 
 + MessageDispatcher(model : GameModel)
 + despachar(json : String) : void // parsea el JSON recibido a Message y actualiza el modelo usando 
 
 // procesa los mensajes raw que vienen de la red, los deserializa y actualiza el modelo local de forma segura para Swing
 
-### GameModel (extends Observable) 
+
+### modelo
+
+#### GameModel (extends Observable) 
 - nickname : String // nombre del jugador local
 - codigoPartida : String // código
 - zonaActualVisible : int // ID de la zona que el jugador está viendo
@@ -922,7 +927,7 @@ src/
 
 // almacena la información que el servidor reporta y notifica a las vistas
 
-### Datos
+#### Datos
 - jugadorA : Jugador
 - jugadorB : Jugador
 - entidadesDisponibles : List\<Entidad>
@@ -936,7 +941,7 @@ src/
 
 // espejo local del snapshot enviado por el servidor en GAME_STARTED y STATE_UPDATE
 
-### Animal
+#### Animal
 - id : int 
 - especie : String // nombre de la especie 
 - energia : int 
@@ -947,7 +952,7 @@ src/
 
 / Representa de forma local a un animal del juego, conteniendo su posición, energía y especie para ser renderizado
 
-### Punto 
+#### Punto 
 - x : double
 - y : double
 + Punto(x : double, y : double) : Punto
@@ -955,7 +960,9 @@ src/
 + getY() : double
 
 
-### SelectionManager
+### controlador
+
+#### SelectionManager
 - animalesSeleccionados : List\<Animal>
 + SelectionManager()
 + seleccionar(animal : Animal) : void
@@ -964,7 +971,10 @@ src/
 
 // controla la selección de elementos mediante clics del usuario en la interfaz para mandar órdenes luego
 
-### MainWindow (extends JFrame)
+
+### vista
+
+#### MainWindow (extends JFrame)
 - gamePanel : GamePanel 
 - HUDPanel : HUDPanel 
 + MainWindow()
@@ -978,7 +988,10 @@ src/
 #### HUDPanel (extends JPanel)
 // HUDPanel de la interfaz de usuario para mostrar estadísticas de juego, tazas de café y barras de vida
 
-### ImageCache (Patrón Singleton)
+
+### util
+
+#### ImageCache (Patrón Singleton)
 - instancia : static ImageCache
 - imagenes : Map<String, BufferedImage>
 - ImageCache()
@@ -987,3 +1000,171 @@ src/
 + getImagen(key : String) : // por determinar
 
 // Caché global que precarga y almacena en memoria las imágenes y texturas para evitar lecturas de disco que sean de forma repetitiva
+
+
+### mensajes
+
+#### TipoMensaje (enum)
++ PRIMER_MENSAJE
++ INDICAR_NOMBRE
++ CREATE_MATCH
++ JOIN_MATCH
++ SELECT_ANIMAL
++ MOVE_ANIMALS
++ ATTACK
++ VIEW_ZONE
++ MATCH_CREATED
++ MATCH_JOINED
++ ANIMAL_SELECTION
++ GAME_STARTED
++ STATE_UPDATE
++ GAME_OVER
++ ERROR
+
+#### Mensaje (abstract)
+- tipo : TipoMensaje
++ Mensaje(tipo : TipoMensaje, nombre : String)
++ getTipo() : TipoMensaje
+
+// Clase base de todos los mensajes.
+// nombre es el cliente asociado al mensaje: remitente si va cliente -> servidor,
+// destinatario si va servidor -> cliente.
+// Si nombre es Constantes.NOMBRE_UNIVERSAL (@Todos), el servidor lo manda a todos los clientes.
+// Cada subclase concreta fija su propio tipo en el constructor, por eso no lo recibe.
+// Json.jsonAMensaje() lee el campo tipo y deserializa a la subclase concreta correspondiente.
+
+
+#### MensajeJugador (abstract, extends Mensaje)
+- nombre : String
++ MensajeJugador(tipo : TipoMensaje, nombre : String)
++ getNombre() : String
++ setNombre(nombre : String) : void
+// Agrupa todos los mensajes cliente -> servidor..
+
+#### MensajeServidor (abstract, extends Mensaje)
++ MensajeServidor(tipo : TipoMensaje)
+
+// Agrupa todos los mensajes servidor -> cliente.
+
+
+//Cliente -> Servidor 
+
+#### MensajeIndicarNombre (extends MensajeJugador)
++ MensajeIndicarNombre(nombre : String)
+
+// tipo = INDICAR_NOMBRE
+// Solo usa el nombre heredado.
+
+#### MensajeCreateMatch (extends MensajeJugador)
++ MensajeCreateMatch(nombre : String)
+
+// tipo = CREATE_MATCH
+// Sin payload.
+
+#### MensajeJoinMatch (extends MensajeJugador)
+- codigo : String
++ MensajeJoinMatch(nombre : String, codigo : String)
++ getCodigo() : String
+
+// tipo = JOIN_MATCH
+
+#### MensajeSelectAnimal (extends MensajeJugador)
+- especie : TipoEspecie
++ MensajeSelectAnimal(nombre : String, especie : TipoEspecie)
++ getEspecie() : TipoEspecie
+
+// tipo = SELECT_ANIMAL
+
+#### MensajeMoveAnimals (extends MensajeJugador)
+- animales : List\<int[]>
+- idNodoDestino : int
++ MensajeMoveAnimals(nombre : String, animales : List\<int[]>, idNodoDestino : int)
++ getAnimales() : List\<int[]>
++ getIdNodoDestino() : int
+
+// tipo = MOVE_ANIMALS
+// Cada animal se identifica como int[]{idPack, idAnimal}.
+// El servidor calcula la ruta con Mapa.getRuta().
+
+#### MensajeAttack (extends MensajeJugador)
+- atacante : int[]
+- enemigo : int[]
++ MensajeAttack(nombre : String, atacante : int[], enemigo : int[])
++ getAtacante() : int[]
++ getEnemigo() : int[]
+
+// tipo = ATTACK
+// Mismo formato que Partida.mandarAtaque(A, B): int[]{idPack, idAnimal}.
+
+#### MensajeViewZone (extends MensajeJugador)
+- idZona : int
++ MensajeViewZone(nombre : String, idZona : int)
++ getIdZona() : int
+
+// tipo = VIEW_ZONE
+
+
+//Servidor -> Cliente 
+
+#### MensajePrimerMensaje (extends MensajeServidor)
+- exito : boolean
+- razon : String
++ MensajePrimerMensaje(exito : boolean, razon : String)
++ isExito() : boolean
++ getRazon() : String
+
+// tipo = PRIMER_MENSAJE
+// razon indica por qué se rechazó la conexión (null si exito es true).
+
+#### MensajeMatchCreated (extends MensajeServidor)
+- codigo : String
++ MensajeMatchCreated(codigo : String)
++ getCodigo() : String
+
+// tipo = MATCH_CREATED
+
+#### MensajeMatchJoined (extends MensajeServidor)
+- codigo : String
+- jugadores : List\<String>
++ MensajeMatchJoined(¿codigo : String, jugadores : List\<String>)
++ getCodigo() : String
++ getJugadores() : List\<String>
+
+// tipo = MATCH_JOINED
+
+#### MensajeAnimalSelection (extends MensajeServidor)
+- especiesDisponibles : List\<TipoEspecie>
+- seleccionOponente : TipoEspecie
++ MensajeAnimalSelection(especiesDisponibles : List\<TipoEspecie>), especieE : TipoEspecie) 
++ getEspeciesDisponibles() : List\<TipoEspecie>
++ getSeleccionOponente() : TipoEspecie
+
+// tipo = ANIMAL_SELECTION
+
+#### MensajeGameStarted (extends MensajeServidor)
+- datos : Datos
++ MensajeGameStarted(datos : Datos)
++ getDatos() : Datos
+
+// tipo = GAME_STARTED
+// datos = estado inicial visible para ese jugador.
+
+#### MensajeStateUpdate (extends MensajeServidor)
+- datos : Datos
++ MensajeStateUpdate(datos : Datos)
++ getDatos() : Datos
+
+// tipo = STATE_UPDATE
+// datos = estado actual visible para ese jugador.
+
+#### MensajeGameOver (extends MensajeServidor)
+- ganador : String
++ MensajeGameOver(ganador : String)
++ getGanador() : String
+
+// tipo = GAME_OVER
+
+#### MensajeError (extends MensajeServidor)
+- descripcion : String
++ MensajeError(descripcion : String)
++ getDescripcion() : String
