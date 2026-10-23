@@ -463,12 +463,12 @@ los clientes.
 - zonaActual : ZonaEnviar
 - eventos : List\<EventoEnviar>
 + DatosEnviar(jugadorA : JugadorEnviar, jugadorB : JugadorEnviar, entidadesDisponibles : List\<EntidadEnviar>, zonaActual : ZonaEnviar, eventos : List\<EventoEnviar>)
-+ static desde(datos : Datos) : DatosEnviar
 + getJugadorA() : JugadorEnviar
 + getJugadorB() : JugadorEnviar
 + getEntidadesDisponibles() : List\<EntidadEnviar>
 + getZonaActual() : ZonaEnviar
 + getEventos() : List\<EventoEnviar>
++ static desde(datos : Datos) : DatosEnviar
 
 // Reemplaza a Datos en MensajeGameStarted y MensajeStateUpdate.
 // desde(): jugadorB puede ser null (el oponente aún no está). Las listas se copian a listas nuevas inmutables (List.copyOf).
@@ -484,7 +484,6 @@ los clientes.
 - botsEliminados : int
 - conectado : boolean
 + JugadorEnviar(id : int, nickname : String, especie : TipoEspecie, animales : List\<AnimalEnviar>, cafesConsumidos : int, botsEliminados : int, conectado : boolean)
-+ static desde(jugador : Jugador, zonaVisible : Zona) : JugadorEnviar
 + getId() : int
 + getNickname() : String
 + getEspecie() : TipoEspecie
@@ -492,6 +491,7 @@ los clientes.
 + getCafesConsumidos() : int
 + getBotsEliminados() : int
 + isConectado() : boolean
++ static desde(jugador : Jugador, zonaVisible : Zona) : JugadorEnviar
 
 // id = jugador.getId() (idPack del Pack).
 // especie = jugador.getEspecie().getTipo(), o TipoEspecie.NINGUNA si todavía no eligió.
@@ -1150,6 +1150,879 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 - validarLongitudYFormatoCodigo(String codigo) : boolean
 - comprobarUnicidadCodigos(List<String> codigosActivos) : boolean
 
+## Diagrama
+```mermaid
+classDiagram
+    direction TB
+
+    %% ===================== MAIN =====================
+    class Main {
+        +main(String[] args)$ void
+    }
+
+    %% ===================== UTILIDADES =====================
+    class Json {
+        +mensajeAJson(Mensaje msg)$ String
+        +jsonAMensaje(String json)$ Mensaje
+    }
+    class Punto {
+        -double x
+        -double y
+        +Punto(double x, double y)
+        +getX() double
+        +getY() double
+    }
+    class Constantes {
+        <<final>>
+        +int LONGITUD_CODIGO$
+        +String IP_SERVIDOR$
+        +double ENCOUNTER_RADIUS$
+        +double ANIMAL_SPEED$
+        +long ATTACK_COOLDOWN_MS$
+        +int MAX_PLAYER_ENERGY$
+        +int PLAYER_INITIAL_ENERGY$
+        +int PLAYER_DAMAGE$
+        +int BOT_INITIAL_ENERGY$
+        +int BOT_DAMAGE$
+        +int PLAYER_PACK_SIZE$
+        +int BOT_PACK_SIZE$
+        +int TOTAL_ZONES$
+        +int TOTAL_COFFEE_CUPS$
+        +String NOMBRE_UNIVERSAL$
+        +int MOVIMIENTOS_MINIMOS_CAMBIAR$
+        +long INTERVALO_STATE_UPDATE_MS$
+        +String LOG_FILE$
+        +long SEED_POR_DEFECTO$
+        +int INTERVALO_REFRESCO_UI_MS$
+        +int MAX_LINEAS_CONSOLA$
+        +int MAX_HISTORIAL_LOG$
+        -Constantes()
+    }
+    class GeneradorAleatorio {
+        <<singleton>>
+        -GeneradorAleatorio instancia$
+        -long seed
+        -boolean seedFija
+        -Random random
+        -ConcurrentHashMap~String, Random~ streams
+        -GeneradorAleatorio()
+        +getInstance()$ GeneradorAleatorio
+        +seedAleatoria() void
+        +setSeed(long seed) void
+        +getSeed() long
+        +setSeedFija(boolean fija) void
+        +isSeedFija() boolean
+        +reiniciar() void
+        +nextInt(int limite) int
+        +nextInt(int min, int max) int
+        +nextDouble() double
+        +nextBoolean() boolean
+        +elegir(List~T~ lista) T
+        +mezclar(List~T~ lista) void
+        +generarCodigo() String
+    }
+    class NivelLog {
+        <<enumeration>>
+        DEBUG
+        INFO
+        WARN
+        ERROR
+    }
+    class EntradaLog {
+        -LocalDateTime momento
+        -NivelLog nivel
+        -String origen
+        -String mensaje
+        +EntradaLog(LocalDateTime momento, NivelLog nivel, String origen, String mensaje)
+        +getMomento() LocalDateTime
+        +getNivel() NivelLog
+        +getOrigen() String
+        +getMensaje() String
+        +formatear() String
+    }
+    class LogListener {
+        <<interface>>
+        +onLog(EntradaLog entrada) void
+    }
+    class Logger {
+        <<singleton>>
+        -Logger instancia$
+        -Path archivo
+        -BufferedWriter escritor
+        -CopyOnWriteArrayList~LogListener~ listeners
+        -ArrayDeque~EntradaLog~ historial
+        -NivelLog nivelMinimo
+        -ReentrantLock lock
+        -Logger()
+        +getInstance()$ Logger
+        +iniciar(String ruta) void
+        +cerrar() void
+        +setNivelMinimo(NivelLog nivel) void
+        +getNivelMinimo() NivelLog
+        +agregarListener(LogListener listener) void
+        +removerListener(LogListener listener) void
+        +getHistorial() List~EntradaLog~
+        +log(NivelLog nivel, String origen, String mensaje) void
+        +debug(String origen, String mensaje) void
+        +info(String origen, String mensaje) void
+        +warn(String origen, String mensaje) void
+        +error(String origen, String mensaje, Throwable causa) void
+        -escribirEnArchivo(EntradaLog entrada) void
+        -notificarListeners(EntradaLog entrada) void
+    }
+
+    %% ===================== UI =====================
+    class VentanaServidor {
+        -Controlador controlador
+        -PanelPartidas panelPartidas
+        -PanelConsola panelConsola
+        -PanelControl panelControl
+        -JSplitPane divisor
+        -Timer timerRefresco
+        +VentanaServidor(Controlador controlador)
+        +iniciarRefresco() void
+        +detenerRefresco() void
+        -construirUI() void
+        -refrescar() void
+        -alCerrar() void
+    }
+    class PanelPartidas {
+        -JPanel contenedor
+        -Map~String, TarjetaPartida~ tarjetas
+        -JLabel etiquetaVacio
+        +PanelPartidas()
+        +actualizar(List~ResumenPartida~ resumenes) void
+    }
+    class TarjetaPartida {
+        -String codigo
+        -JLabel etiquetaCodigo
+        -JLabel etiquetaEstado
+        -JLabel etiquetaDuracion
+        -JLabel etiquetaBots
+        -JLabel etiquetaCafes
+        -JTable tablaJugadores
+        -ModeloTablaJugadores modeloJugadores
+        +TarjetaPartida(String codigo)
+        +actualizar(ResumenPartida resumen) void
+        -colorDeEstado(EstadoPartida estado) Color
+    }
+    class ModeloTablaJugadores {
+        -List~ResumenJugador~ filas
+        +setJugadores(List~ResumenJugador~ jugadores) void
+        +getRowCount() int
+        +getColumnCount() int
+        +getColumnName(int col) String
+        +getValueAt(int fila, int col) Object
+    }
+    class PanelConsola {
+        -JTextPane areaTexto
+        -JScrollPane scroll
+        -boolean autoScroll
+        -NivelLog filtroNivel
+        -String filtroTexto
+        -int lineas
+        +PanelConsola()
+        +onLog(EntradaLog entrada) void
+        +cargarHistorial(List~EntradaLog~ entradas) void
+        +limpiar() void
+        +setAutoScroll(boolean activo) void
+        +setFiltroNivel(NivelLog nivel) void
+        +setFiltroTexto(String texto) void
+        -agregarLinea(EntradaLog entrada) void
+        -recortarSiSobrepasa() void
+        -colorDeNivel(NivelLog nivel) Color
+    }
+    class PanelControl {
+        -JTextField campoSeed
+        -JCheckBox checkSeedFija
+        -JButton botonAplicarSeed
+        -JButton botonSeedAleatoria
+        -JComboBox~NivelLog~ comboNivel
+        -JCheckBox checkAutoScroll
+        -JButton botonLimpiar
+        -JTextField campoFiltro
+        -JButton botonGuardar
+        +PanelControl(PanelConsola panelConsola)
+        -aplicarSeed() void
+        -generarSeedAleatoria() void
+    }
+
+    %% ===================== SERVER =====================
+    class ClientHandler {
+        -Socket socket
+        -BufferedReader entrada
+        -PrintWriter salida
+        -Servidor servidor
+        -String nombre
+        -boolean activo
+        +ClientHandler(Socket socket, Servidor servidor)
+        +run() void
+        +getNombre() String
+        +setNombre(String nombre) void
+        +mandar(MensajeServidor mensaje) void
+        +ascenderMensaje(MensajeJugador mensaje) void
+        +cerrar() void
+    }
+    class ThreadConexiones {
+        -ServerSocket serverSocket
+        -Servidor servidor
+        -boolean activo
+        +ThreadConexiones(Servidor servidor, int puerto)
+        +run() void
+        +detener() void
+    }
+    class Servidor {
+        -Controlador controlador
+        -ConcurrentHashMap~String, ClientHandler~ clientes
+        -List~ClientHandler~ conectados
+        -ThreadConexiones threadConexiones
+        -ExecutorService executor
+        +Servidor()
+        +iniciar() void
+        +detener() void
+        +registrarCliente(ClientHandler handler) void
+        +asignarNombre(ClientHandler handler, String nombre) boolean
+        +removerCliente(ClientHandler handler) void
+        +mandarACliente(String nombre, MensajeServidor msg) void
+        +mandarATodos(MensajeServidor msg) void
+        +mandarASistema(MensajeJugador msg) void
+        +getCantidadClientes() int
+    }
+    class ServerConfig {
+        <<singleton>>
+        -ServerConfig instancia$
+        -String ip
+        -int puerto
+        -ConcurrentSkipListSet~String~ nombresOcupados
+        -ServerConfig()
+        +getInstance()$ ServerConfig
+        +getIp() String
+        +getPuerto() int
+        +reservarNombre(String nombre) boolean
+        +liberarNombre(String nombre) void
+    }
+
+    %% ===================== CONTROLADOR =====================
+    class Controlador {
+        -Mapa mapa
+        -Servidor servidor
+        -ConcurrentHashMap~String, Partida~ partidas
+        -ConcurrentHashMap~String, String~ partidaDeJugador
+        -ExecutorService ejecutor
+        -EjecutorMensajes ejecutorMensajes
+        +Controlador(Servidor servidor)
+        +ejecutarMensaje(MensajeJugador msg) void
+        +actualizarEstado(HashMap~String, DatosEnviar~ datos) void
+        +enviar(String nombre, MensajeServidor msg) void
+        +enviarATodos(MensajeServidor msg) void
+        +crearJuego(String nickname) String
+        +unirsePartida(String codigo, String nickname) boolean
+        +getPartidaDe(String nombre) Partida
+        +finalizarPartida(String codigo) void
+        +jugadorDesconectado(String nombre) void
+        +getResumenesPartidas() List~ResumenPartida~
+        +getCantidadPartidas() int
+    }
+    class EjecutorMensajes {
+        -Map~TipoMensaje, ManejadorMensaje~ manejadores
+        -Controlador controlador
+        +EjecutorMensajes(Controlador controlador)
+        +registrar(ManejadorMensaje manejador) void
+        +ejecutar(MensajeJugador msg) void
+        -registrarPorDefecto() void
+    }
+    class ManejadorMensaje {
+        <<interface>>
+        +getTipo() TipoMensaje
+        +ejecutar(MensajeJugador msg, Controlador controlador) void
+    }
+    class ManejadorCreateMatch
+    class ManejadorJoinMatch
+    class ManejadorSelectAnimal
+    class ManejadorMoveAnimals
+    class ManejadorAttack
+    class ManejadorViewZone
+
+    %% ===================== ENVIABLES =====================
+    class DatosEnviar {
+        -JugadorEnviar jugadorA
+        -JugadorEnviar jugadorB
+        -List~EntidadEnviar~ entidadesDisponibles
+        -ZonaEnviar zonaActual
+        -List~EventoEnviar~ eventos
+        +desde(Datos datos)$ DatosEnviar
+    }
+    class JugadorEnviar {
+        -int id
+        -String nickname
+        -TipoEspecie especie
+        -List~AnimalEnviar~ animales
+        -int cafesConsumidos
+        -int botsEliminados
+        -boolean conectado
+        +desde(Jugador jugador, Zona zonaVisible)$ JugadorEnviar
+    }
+    class EntidadEnviar {
+        <<abstract>>
+        -int id
+        -TipoEntidad tipo
+        -PosicionEnviar posicion
+        +desde(Entidad entidad)$ EntidadEnviar
+    }
+    class AnimalEnviar {
+        -int idPack
+        -TipoEspecie especie
+        -int energia
+        +desde(Animal animal)$ AnimalEnviar
+    }
+    class CafeEnviar {
+        -boolean consumido
+        +desde(Cafe cafe)$ CafeEnviar
+    }
+    class BanderaEnviar {
+        -int idJugador
+        -String color
+        +desde(Bandera bandera)$ BanderaEnviar
+    }
+    class EventoEnviar {
+        -TipoEvento tipo
+        -PosicionEnviar origen
+        -PosicionEnviar destino
+        +desde(Evento evento)$ EventoEnviar
+    }
+    class ZonaEnviar {
+        -int id
+        -List~NodoEnviar~ nodos
+        +desde(Zona zona)$ ZonaEnviar
+    }
+    class NodoEnviar {
+        -int id
+        -Punto posicion
+        -int idZona
+        +desde(Nodo nodo)$ NodoEnviar
+    }
+    class PosicionEnviar {
+        -NodoEnviar nodo
+        -Punto punto
+        +desde(Posicion posicion)$ PosicionEnviar
+    }
+
+    %% ===================== LOGICA =====================
+    class EstadoPartida {
+        <<enumeration>>
+        ESPERANDO
+        SELECCION
+        JUGANDO
+        TERMINADA
+    }
+    class Partida {
+        -Controlador controlador
+        -String codigo
+        -EstadoPartida estado
+        -ArrayList~Jugador~ jugadores
+        -ArrayList~Bot~ bots
+        -ArrayList~Pack~ manadas
+        -ArrayList~Cafe~ cafes
+        -ArrayList~Bandera~ banderas
+        -ExecutorService ejecutor
+        -ConcurrentLinkedQueue~Evento~ eventosPendientes
+        -Notificador notificador
+        -long inicio
+        -String ganador
+        +Partida(Controlador controlador, String codigo)
+        +run() void
+        +getCodigo() String
+        +getEstado() EstadoPartida
+        +agregarJugador(String nickname) boolean
+        +crearJuego() boolean
+        +iniciarPartida() boolean
+        +seleccionarEspecie(String nombre, TipoEspecie especie) void
+        +moverAnimales(String nombre, List~int[]~ animales, int idNodoDestino) void
+        +mandarAtaque(String nombre, int[] A, int[] B) void
+        +verZona(String nombre, int idZona) void
+        +registrarEvento(Evento evento) void
+        +notificar(HashMap~String, DatosEnviar~ datos) void
+        +finalizar(Jugador ganador) boolean
+        +getResumen() ResumenPartida
+        -asignarZonas() void
+        -crearBanderas() void
+        -crearAnimales() void
+        -crearCafes() void
+        -filtrarZona(Jugador jugador) Zona
+        -obtenerDatos(Jugador jugador) DatosEnviar
+        -construirDatos() HashMap~String, DatosEnviar~
+    }
+    class ResumenPartida {
+        -String codigo
+        -EstadoPartida estado
+        -List~ResumenJugador~ jugadores
+        -int botsVivos
+        -int botsTotales
+        -int cafesRestantes
+        -long duracionMs
+        -String ganador
+    }
+    class ResumenJugador
+    class Notificador {
+        -Partida partida
+        +Notificador(Partida partida)
+        +enviarDatos(HashMap~String, DatosEnviar~ datos) void
+        +enviarFin(String ganador) void
+    }
+    class ThreadAnimal {
+        <<abstract>>
+        -Partida partida
+        -long ultimoAtaque
+        -boolean activo
+        +run() void
+        +detener() void
+        +getPartida() Partida
+        +decidir(long ahora) void
+        -moverse(long ahora) void
+        -atacar(long ahora) void
+    }
+    class ThreadJugador {
+        -Jugador animal
+        -List~int[][]~ ataquesPendientes
+        +run() void
+        +setObjetivo(Animal objetivo) void
+        +detener() void
+        +decidir(long ahora) void
+        +agregarAtaque(int[] idJugador, int[] idEnemigo) void
+        -moverse() void
+        -atacar() void
+        -verificarBandera() boolean
+    }
+    class ThreadBot {
+        -Bot bot
+        +run() void
+        +detener() void
+        +decidir(long ahora) void
+        -moverse() void
+        -atacar() void
+        -buscarSiguienteRuta() void
+        -intentarAtacar() boolean
+    }
+    class EstrategiaBot {
+        <<interface>>
+        +elegirDestino(Bot bot, Partida partida) Ruta
+    }
+    class EstrategiaDirecta
+    class EstrategiaCercana
+    class EstrategiaAleatoria
+    class SelectorEstrategia {
+        +elegir() EstrategiaBot
+    }
+    class TipoEntidad {
+        <<enumeration>>
+        ANIMAL
+        CAFE
+        BANDERA
+    }
+    class Entidad {
+        <<abstract>>
+        -int id
+        -TipoEntidad tipo
+        -Posicion posicion
+        +Entidad(int id, TipoEntidad tipo, Posicion posicion)
+        +getPosicion() Posicion
+        +setPosicion(Posicion posicion) void
+        +distanciaCon(Entidad otra) double
+        +getEnviable() EntidadEnviar
+    }
+    class Animal {
+        <<abstract>>
+        -Pack pack
+        -int energia
+        -Ruta ruta
+        -Zona zonaActual
+        +getPack() Pack
+        +getEnergia() int
+        +setRuta(Ruta ruta) void
+        +getRuta() Ruta
+        +getZonaActual() Zona
+        +recibirDamage(int cantidad) void
+        +estaVivo() boolean
+        +moverse() boolean
+        +getEnviable() AnimalEnviar
+    }
+    class Pack {
+        <<abstract>>
+        -int id
+        -List~Animal~ animales
+        -Especie especie
+        -int damage
+        -int conteoDeBajas
+        +getId() int
+        +atacar(int[] idEnemigo) int
+        +getLista() List~Animal~
+        +getZonasAnimales() ArrayList~Zona~
+        +getVivos() int
+        +getEnergiaTotal() int
+        +agregarBotEliminado() void
+    }
+    class Jugador {
+        -String nickname
+        -Zona zonaElegida
+        -int cafesConsumidos
+        -int botsEliminados
+        -boolean conectado
+        +getNickname() String
+        +elegirZona(Zona zona) void
+        +sumarCafe() void
+        +sumarBotEliminado() void
+        +isConectado() boolean
+        +setConectado(boolean conectado) void
+    }
+    class Bot {
+        -EstrategiaBot estrategia
+        -Ruta rutaActual
+        -int movimientosEnRuta
+        +getEstrategia() EstrategiaBot
+        +cambiarDeEstrategia() void
+    }
+    class Cafe {
+        -boolean consumido
+        +consumir() boolean
+        +estaDisponible() boolean
+        +getEnviable() CafeEnviar
+    }
+    class Bandera {
+        -Jugador jugador
+        -String color
+        +fueTocadaPor(Animal animal) boolean
+        +getEnviable() BanderaEnviar
+    }
+    class TipoEvento {
+        <<enumeration>>
+        ATAQUE
+    }
+    class Evento {
+        -TipoEvento tipo
+        -Posicion origen
+        -Posicion destino
+        +Evento(TipoEvento tipo, Posicion origen, Posicion destino)
+        +getEnviable() EventoEnviar
+    }
+    class Datos {
+        -Jugador jugadorA
+        -Jugador jugadorB
+        -List~Entidad~ entidadesDisponibles
+        -Zona zonaActual
+        -List~Evento~ eventos
+        +getEnviable() DatosEnviar
+    }
+    class TipoEspecie {
+        <<enumeration>>
+        JAGUAR
+        YIGUIRRO
+        PEREZOSO
+        DANTA
+        TUCAN
+        VENADO_CO_BLA
+        MONO_CO_BLA
+        NINGUNA
+    }
+    class Especie
+
+    %% ===================== MAPA =====================
+    class Posicion {
+        -Nodo nodo
+        -Punto punto
+        +getNodo() Nodo
+        +seguirRuta(Ruta ruta) boolean
+        +setPunto(Punto punto) void
+        +getPunto() Punto
+        +getEnviable() PosicionEnviar
+    }
+    class Ruta {
+        -List~Nodo~ nodos
+        -int nodoActual
+        +getNodos() List~Nodo~
+        +getNodoActual() Nodo
+        +avanzar() boolean
+        +haTerminado() boolean
+    }
+    class Mapa {
+        <<singleton>>
+        -List~Zona~ zonas
+        -Map~Nodo, List~Vecinos~~ vecinos
+        -Mapa()
+        -crearZonas() void
+        -crearNodos() void
+        -crearVecinos() void
+        -crearMapaVecinos() void
+        -crearMapa() Mapa
+        +getInstance()$ Mapa
+        +getRuta(Nodo nodoA, Nodo nodoB) Ruta
+        +getZonas() List~Zona~
+        +getVecinos() Map
+        +getVecinosDe(Nodo nodo) List~Vecinos~
+        +getPeso(Nodo a, Nodo b) Double
+    }
+    class Zona {
+        -List~Nodo~ nodos
+        -Mapa mapa
+        +Zona(Mapa mapa)
+        +getNodos() List~Nodo~
+        +getMapa() Mapa
+        +agregarNodo(Nodo nodo) void
+        +contiene(Nodo nodo) boolean
+        +getEnviable() ZonaEnviar
+    }
+    class Nodo {
+        -int id
+        -Punto posicion
+        -Zona zona
+        +Nodo(int id, Punto posicion, Zona zona)
+        +getId() int
+        +getPosicion() Punto
+        +getZona() Zona
+        +equals(Object o) boolean
+        +hashCode() int
+        +getEnviable() NodoEnviar
+    }
+    class Vecinos {
+        -Nodo nodoA
+        -Nodo nodoB
+        -Double peso
+        +Vecinos(Nodo a, Nodo b, Double peso)
+        +getNodoA() Nodo
+        +getNodoB() Nodo
+        +getPeso() Double
+        +formaParte(Nodo nodo) boolean
+        +getOtro(Nodo nodo) Nodo
+    }
+
+    %% ===================== MENSAJES =====================
+    class TipoMensaje {
+        <<enumeration>>
+        PRIMER_MENSAJE
+        INDICAR_NOMBRE
+        CREATE_MATCH
+        JOIN_MATCH
+        SELECT_ANIMAL
+        MOVE_ANIMALS
+        ATTACK
+        VIEW_ZONE
+        MATCH_CREATED
+        MATCH_JOINED
+        ANIMAL_SELECTION
+        GAME_STARTED
+        STATE_UPDATE
+        GAME_OVER
+        ERROR
+    }
+    class Mensaje {
+        <<abstract>>
+        -TipoMensaje tipo
+        +getTipo() TipoMensaje
+    }
+    class MensajeJugador {
+        <<abstract>>
+        -String nombre
+        +getNombre() String
+        +setNombre(String nombre) void
+    }
+    class MensajeServidor {
+        <<abstract>>
+    }
+    class MensajeIndicarNombre
+    class MensajeCreateMatch
+    class MensajeJoinMatch {
+        -String codigo
+    }
+    class MensajeSelectAnimal {
+        -TipoEspecie especie
+    }
+    class MensajeMoveAnimals {
+        -List~int[]~ animales
+        -int idNodoDestino
+    }
+    class MensajeAttack {
+        -int[] atacante
+        -int[] enemigo
+    }
+    class MensajeViewZone {
+        -int idZona
+    }
+    class MensajePrimerMensaje {
+        -boolean exito
+        -String razon
+    }
+    class MensajeMatchCreated {
+        -String codigo
+    }
+    class MensajeMatchJoined {
+        -String codigo
+        -List~String~ jugadores
+    }
+    class MensajeAnimalSelection {
+        -List~TipoEspecie~ especiesDisponibles
+        -TipoEspecie seleccionOponente
+    }
+    class MensajeGameStarted {
+        -DatosEnviar datos
+    }
+    class MensajeStateUpdate {
+        -DatosEnviar datos
+    }
+    class MensajeGameOver {
+        -String ganador
+    }
+    class MensajeError {
+        -String descripcion
+    }
+
+    %% ===================== RELACIONES =====================
+    %% Main / arranque
+    Main ..> Logger
+    Main ..> GeneradorAleatorio
+    Main ..> Servidor
+    Main ..> VentanaServidor
+
+    %% Log
+    Logger o-- LogListener
+    Logger o-- EntradaLog
+    EntradaLog --> NivelLog
+    Logger --> NivelLog
+    PanelConsola ..|> LogListener
+
+    %% UI
+    VentanaServidor *-- PanelPartidas
+    VentanaServidor *-- PanelConsola
+    VentanaServidor *-- PanelControl
+    VentanaServidor --> Controlador
+    PanelPartidas *-- TarjetaPartida
+    TarjetaPartida *-- ModeloTablaJugadores
+    ModeloTablaJugadores o-- ResumenJugador
+    TarjetaPartida ..> ResumenPartida
+    PanelControl --> PanelConsola
+    PanelControl ..> GeneradorAleatorio
+
+    %% Server
+    Servidor *-- ThreadConexiones
+    Servidor o-- ClientHandler
+    Servidor --> Controlador
+    ClientHandler --> Servidor
+    ThreadConexiones --> Servidor
+    Servidor ..> ServerConfig
+
+    %% Controlador / Strategy de mensajes
+    Controlador --> Servidor
+    Controlador --> Mapa
+    Controlador o-- Partida
+    Controlador *-- EjecutorMensajes
+    EjecutorMensajes o-- ManejadorMensaje
+    ManejadorCreateMatch ..|> ManejadorMensaje
+    ManejadorJoinMatch ..|> ManejadorMensaje
+    ManejadorSelectAnimal ..|> ManejadorMensaje
+    ManejadorMoveAnimals ..|> ManejadorMensaje
+    ManejadorAttack ..|> ManejadorMensaje
+    ManejadorViewZone ..|> ManejadorMensaje
+
+    %% Enviables
+    DatosEnviar *-- JugadorEnviar
+    DatosEnviar *-- EntidadEnviar
+    DatosEnviar *-- ZonaEnviar
+    DatosEnviar *-- EventoEnviar
+    JugadorEnviar *-- AnimalEnviar
+    AnimalEnviar --|> EntidadEnviar
+    CafeEnviar --|> EntidadEnviar
+    BanderaEnviar --|> EntidadEnviar
+    EntidadEnviar --> PosicionEnviar
+    EventoEnviar --> PosicionEnviar
+    PosicionEnviar --> NodoEnviar
+    ZonaEnviar *-- NodoEnviar
+    DatosEnviar ..> Datos
+    Entidad ..> EntidadEnviar
+
+    %% Logica
+    Partida --> Controlador
+    Partida --> EstadoPartida
+    Partida o-- Jugador
+    Partida o-- Bot
+    Partida o-- Pack
+    Partida o-- Cafe
+    Partida o-- Bandera
+    Partida o-- Evento
+    Partida *-- Notificador
+    Partida ..> ResumenPartida
+    ResumenPartida o-- ResumenJugador
+    Notificador --> Partida
+    Jugador --|> Pack
+    Bot --|> Pack
+    Pack *-- Animal
+    Pack --> Especie
+    Animal --|> Entidad
+    Cafe --|> Entidad
+    Bandera --|> Entidad
+    Animal --> Pack
+    Animal --> Ruta
+    Animal --> Zona
+    Bandera --> Jugador
+    Entidad --> TipoEntidad
+    Entidad --> Posicion
+    Evento --> TipoEvento
+    Evento --> Posicion
+    Datos o-- Jugador
+    Datos o-- Entidad
+    Datos o-- Evento
+    Datos --> Zona
+    Especie --> TipoEspecie
+    Jugador --> TipoEspecie
+
+    %% Threads
+    ThreadJugador --|> ThreadAnimal
+    ThreadBot ..|> ThreadAnimal
+    ThreadAnimal --> Partida
+    ThreadJugador --> Jugador
+    ThreadBot --> Bot
+
+    %% Strategy de bots
+    Bot --> EstrategiaBot
+    EstrategiaDirecta ..|> EstrategiaBot
+    EstrategiaCercana ..|> EstrategiaBot
+    EstrategiaAleatoria ..|> EstrategiaBot
+    SelectorEstrategia ..> EstrategiaBot
+
+    %% Mapa
+    Mapa *-- Zona
+    Mapa o-- Vecinos
+    Zona *-- Nodo
+    Zona --> Mapa
+    Nodo --> Zona
+    Nodo --> Punto
+    Vecinos --> Nodo
+    Posicion --> Nodo
+    Posicion --> Punto
+    Ruta o-- Nodo
+
+    %% Mensajes
+    Mensaje --> TipoMensaje
+    MensajeJugador --|> Mensaje
+    MensajeServidor --|> Mensaje
+    MensajeIndicarNombre --|> MensajeJugador
+    MensajeCreateMatch --|> MensajeJugador
+    MensajeJoinMatch --|> MensajeJugador
+    MensajeSelectAnimal --|> MensajeJugador
+    MensajeMoveAnimals --|> MensajeJugador
+    MensajeAttack --|> MensajeJugador
+    MensajeViewZone --|> MensajeJugador
+    MensajePrimerMensaje --|> MensajeServidor
+    MensajeMatchCreated --|> MensajeServidor
+    MensajeMatchJoined --|> MensajeServidor
+    MensajeAnimalSelection --|> MensajeServidor
+    MensajeGameStarted --|> MensajeServidor
+    MensajeStateUpdate --|> MensajeServidor
+    MensajeGameOver --|> MensajeServidor
+    MensajeError --|> MensajeServidor
+    MensajeGameStarted --> DatosEnviar
+    MensajeStateUpdate --> DatosEnviar
+    MensajeSelectAnimal --> TipoEspecie
+    Json ..> Mensaje
+    ClientHandler ..> Mensaje
+```
 
 ## Spec Cliente
 
@@ -1198,7 +2071,7 @@ src/
         |-- AccionGameStarted.java
         |-- AccionGameOver.java
         |-- AccionError.java
-        |-- Datos.java
+        |-- DatosEnviar.java
         |-- Jugador.java
         |-- Entidad.java
         |-- TipoEntidad.java
@@ -1327,7 +2200,7 @@ src/
 - especiesDisponibles : List\<TipoEspecie>
 - seleccionOponente : TipoEspecie
 - zonaActualVisible : int
-- datos : Datos
+- datos : DatosEnviar
 - animalesLocales : List\<Animal>
 - animalesConocidos : Map\<String, Animal>
 - listaObservers : List\<Observer>
@@ -1342,7 +2215,7 @@ src/
 + getJugadoresEnPartida() : List\<String>
 + getEspeciesDisponibles() : List\<TipoEspecie>
 + getSeleccionOponente() : TipoEspecie
-+ getDatos() : Datos
++ getDatos() : DatosEnviar
 + getJugadorLocal() : Jugador
 + getOponente() : Jugador
 + getAnimalesLocales() : List\<Animal>
@@ -1352,24 +2225,24 @@ src/
 + getUltimoError() : String
 + getZonaActualVisible() : int
 + setZonaActualVisible(zonaId : int) : void
-+ actualizarEstado(datos : Datos) : void
++ actualizarEstado(datos : DatosEnviar) : void
 + realizarAccion (accion : AccionMensaje) : void
 + onDesconexion() : void
 + reiniciarPartida() : void
 - notificar(tipo : TipoMensaje) : void
-- recordarAnimales(datos : Datos) : void
+- recordarAnimales(datos : DatosEnviar) : void
 
 // Estado del juego en el cliente
 // El argumento de notifyObservers es el TipoMensaje que originó el cambio, así las vistas saben qué cambió.
 // reiniciarPartida() se ejecuta despues de que la partida termine
 
-#### Datos
+#### DatosEnviar
 - jugadorA : Jugador
 - jugadorB : Jugador
 - entidadesDisponibles : List\<Entidad>
 - zonaActual : Zona
 - eventos : List\<Evento>
-- Datos()
+- DatosEnviar()
 + getJugadorA() : Jugador
 + getJugadorB() : Jugador
 + getEntidadesDisponibles() : List\<Entidad>
@@ -1607,173 +2480,6 @@ src/
 #### Json
 + mensajeAJson(msg : Mensaje) : Static String
 + jsonAMensaje(json : String) : Static Mensaje
-
- 
-
-### mensajes
-
-#### TipoMensaje (enum)
-+ PRIMER_MENSAJE
-+ INDICAR_NOMBRE
-+ CREATE_MATCH
-+ JOIN_MATCH
-+ SELECT_ANIMAL
-+ MOVE_ANIMALS
-+ ATTACK
-+ VIEW_ZONE
-+ MATCH_CREATED
-+ MATCH_JOINED
-+ ANIMAL_SELECTION
-+ GAME_STARTED
-+ STATE_UPDATE
-+ GAME_OVER
-+ ERROR
-
-#### Mensaje (abstract)
-- tipo : TipoMensaje
-+ Mensaje(tipo : TipoMensaje)
-+ getTipo() : TipoMensaje
-
-// Clase base de todos los mensajes. Cada subclase fija su tipo en el constructor.
-// El campo tipo está anotado con @JsonIgnore: no aparece dentro de "payload".
-// El campo "nombre" vive solo en MensajeJugador; los mensajes de servidor no lo tienen, el servidor decide el destinatario con mandarACliente(nombre, msg).
-
-#### MensajeJugador (abstract, extends Mensaje)
-- nombre : String
-+ MensajeJugador(tipo : TipoMensaje, nombre : String)
-+ getNombre() : String
-+ setNombre(nombre : String) : void
-
-// Agrupa todos los mensajes cliente -> servidor. Solo se serializan en el cliente.
-
-#### MensajeServidor (abstract, extends Mensaje)
-+ MensajeServidor(tipo : TipoMensaje)
-
-// Agrupa todos los mensajes servidor -> cliente. Solo se deserializan en el cliente.
-
-//Cliente -> Servidor
-
-#### MensajeIndicarNombre (extends MensajeJugador)
-+ MensajeIndicarNombre(nombre : String)
-
-// tipo = INDICAR_NOMBRE. Primer mensaje que debe enviar el cliente.
-
-#### MensajeCreateMatch (extends MensajeJugador)
-+ MensajeCreateMatch(nombre : String)
-
-// tipo = CREATE_MATCH. Sin campos propios; el payload solo lleva "nombre".
-
-#### MensajeJoinMatch (extends MensajeJugador)
-- codigo : String
-+ MensajeJoinMatch(nombre : String, codigo : String)
-+ getCodigo() : String
-
-// tipo = JOIN_MATCH
-
-#### MensajeSelectAnimal (extends MensajeJugador)
-- especie : TipoEspecie
-+ MensajeSelectAnimal(nombre : String, especie : TipoEspecie)
-+ getEspecie() : TipoEspecie
-
-// tipo = SELECT_ANIMAL
-
-#### MensajeMoveAnimals (extends MensajeJugador)
-- animales : List\<int[]>
-- idNodoDestino : int
-+ MensajeMoveAnimals(nombre : String, animales : List\<int[]>, idNodoDestino : int)
-+ getAnimales() : List\<int[]>
-+ getIdNodoDestino() : int
-
-// tipo = MOVE_ANIMALS. Cada animal se identifica como int[]{idPack, idAnimal}. El servidor calcula la ruta.
-
-#### MensajeAttack (extends MensajeJugador)
-- atacante : int[]
-- enemigo : int[]
-+ MensajeAttack(nombre : String, atacante : int[], enemigo : int[])
-+ getAtacante() : int[]
-+ getEnemigo() : int[]
-
-// tipo = ATTACK. Formato int[]{idPack, idAnimal}.
-
-#### MensajeViewZone (extends MensajeJugador)
-- idZona : int
-+ MensajeViewZone(nombre : String, idZona : int)
-+ getIdZona() : int
-
-// tipo = VIEW_ZONE
-
-//Servidor -> Cliente
-// Todos los mensajes de este bloque declaran además un constructor privado sin argumentos que llama a super(TIPO_CORRESPONDIENTE); es el que usa Jackson.
-
-#### MensajePrimerMensaje (extends MensajeServidor)
-- exito : boolean
-- razon : String
-- MensajePrimerMensaje()
-+ MensajePrimerMensaje(exito : boolean, razon : String)
-+ isExito() : boolean
-+ getRazon() : String
-
-// tipo = PRIMER_MENSAJE. razon es null si exito es true.
-
-#### MensajeMatchCreated (extends MensajeServidor)
-- codigo : String
-- MensajeMatchCreated()
-+ MensajeMatchCreated(codigo : String)
-+ getCodigo() : String
-
-// tipo = MATCH_CREATED
-
-#### MensajeMatchJoined (extends MensajeServidor)
-- codigo : String
-- jugadores : List\<String>
-- MensajeMatchJoined()
-+ MensajeMatchJoined(codigo : String, jugadores : List\<String>)
-+ getCodigo() : String
-+ getJugadores() : List\<String>
-
-// tipo = MATCH_JOINED
-
-#### MensajeAnimalSelection (extends MensajeServidor)
-- especiesDisponibles : List\<TipoEspecie>
-- seleccionOponente : TipoEspecie
-- MensajeAnimalSelection()
-+ MensajeAnimalSelection(especiesDisponibles : List\<TipoEspecie>, seleccionOponente : TipoEspecie)
-+ getEspeciesDisponibles() : List\<TipoEspecie>
-+ getSeleccionOponente() : TipoEspecie
-
-// tipo = ANIMAL_SELECTION. seleccionOponente es NINGUNA si el rival todavía no eligió.
-
-#### MensajeGameStarted (extends MensajeServidor)
-- datos : Datos
-- MensajeGameStarted()
-+ MensajeGameStarted(datos : Datos)
-+ getDatos() : Datos
-
-// tipo = GAME_STARTED
-
-#### MensajeStateUpdate (extends MensajeServidor)
-- datos : Datos
-- MensajeStateUpdate()
-+ MensajeStateUpdate(datos : Datos)
-+ getDatos() : Datos
-
-// tipo = STATE_UPDATE
-
-#### MensajeGameOver (extends MensajeServidor)
-- ganador : String
-- MensajeGameOver()
-+ MensajeGameOver(ganador : String)
-+ getGanador() : String
-
-// tipo = GAME_OVER
-
-#### MensajeError (extends MensajeServidor)
-- descripcion : String
-- MensajeError()
-+ MensajeError(descripcion : String)
-+ getDescripcion() : String
-
-// tipo = ERROR
 
 ### mensajes
 
