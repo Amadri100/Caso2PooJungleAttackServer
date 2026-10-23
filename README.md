@@ -2,7 +2,116 @@
 Codigo de partida: 4 caracteres alfanumericos, case-insensitive.
 Se utilizo java 21 con Maven, Jackson, jsvg y JUnit5
 
+Estudiantes: Andres Madrigal y David Zuniga
+
 ## Spec Server
+
+```
+src/
+|-- main/
+    |-- Main.java
+|-- server/
+    |-- utilidades/
+        |-- Json.java
+        |-- Punto.java
+        |-- Constantes.java
+        |-- GeneradorAleatorio.java
+        |-- NivelLog.java
+        |-- EntradaLog.java
+        |-- LogListener.java
+        |-- Logger.java
+    |-- ui/
+        |-- VentanaServidor.java
+        |-- PanelPartidas.java
+        |-- TarjetaPartida.java
+        |-- ModeloTablaJugadores.java
+        |-- PanelConsola.java
+        |-- PanelControl.java
+    |-- server/
+        |-- ClientHandler.java
+        |-- ThreadConexiones.java
+        |-- Servidor.java
+        |-- ServerConfig.java
+    |-- controlador/
+        |-- Controlador.java
+        |-- EjecutorMensajes.java
+        |-- ManejadorMensaje.java
+        |-- ManejadorCreateMatch.java
+        |-- ManejadorJoinMatch.java
+        |-- ManejadorSelectAnimal.java
+        |-- ManejadorMoveAnimals.java
+        |-- ManejadorAttack.java
+        |-- ManejadorViewZone.java
+    |-- enviables/
+        |-- DatosEnviar.java
+        |-- JugadorEnviar.java
+        |-- EntidadEnviar.java
+        |-- AnimalEnviar.java
+        |-- CafeEnviar.java
+        |-- BanderaEnviar.java
+        |-- EventoEnviar.java
+        |-- ZonaEnviar.java
+        |-- NodoEnviar.java
+        |-- PosicionEnviar.java
+    |-- logica/
+        |-- EstadoPartida.java
+        |-- Partida.java
+        |-- ResumenPartida.java
+        |-- ResumenJugador.java
+        |-- Notificador.java
+        |-- ThreadAnimal.java
+        |-- ThreadJugador.java
+        |-- ThreadBot.java
+        |-- EstrategiaBot.java
+        |-- EstrategiaDirecta.java
+        |-- EstrategiaCercana.java
+        |-- EstrategiaAleatoria.java
+        |-- SelectorEstrategia.java
+        |-- TipoEntidad.java
+        |-- Entidad.java
+        |-- Animal.java
+        |-- Pack.java
+        |-- Jugador.java
+        |-- Bot.java
+        |-- Cafe.java
+        |-- Bandera.java
+        |-- TipoEvento.java
+        |-- Evento.java
+        |-- Datos.java
+        |-- TipoEspecie.java
+    |-- mapa/
+        |-- Posicion.java
+        |-- Ruta.java
+        |-- Mapa.java
+        |-- Zona.java
+        |-- Nodo.java
+        |-- Vecinos.java
+    |-- mensajes/
+        |-- TipoMensaje.java
+        |-- Mensaje.java
+        |-- MensajeJugador.java
+        |-- MensajeServidor.java
+        |-- MensajeIndicarNombre.java
+        |-- MensajeCreateMatch.java
+        |-- MensajeJoinMatch.java
+        |-- MensajeSelectAnimal.java
+        |-- MensajeMoveAnimals.java
+        |-- MensajeAttack.java
+        |-- MensajeViewZone.java
+        |-- MensajePrimerMensaje.java
+        |-- MensajeMatchCreated.java
+        |-- MensajeMatchJoined.java
+        |-- MensajeAnimalSelection.java
+        |-- MensajeGameStarted.java
+        |-- MensajeStateUpdate.java
+        |-- MensajeGameOver.java
+        |-- MensajeError.java
+|-- test/
+    |-- JsonTest.java
+    |-- MapaTest.java
+    |-- PartidaTest.java
+    |-- ControladorTest.java
+```
 
 ### main
 #### Main
@@ -984,67 +1093,63 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 // tipo = ERROR
 // Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
 
-## Spec Server Test
+### Test
 
-### JsonTest
-+ mensajeAJson_createMatch_generaUnaSolaLinea() : void
-+ roundTrip_todosLosTiposDeMensaje_conservanCampos() : void
-+ jsonAMensaje_tipoDesconocido_lanzaIllegalArgumentException() : void
-+ jsonAMensaje_camposExtra_losIgnora() : void
-+ roundTrip_gameStartedConEntidadPolimorfica_resuelveAnimalCafeBandera() : void
+#### JsonTest
++ mensajeAJsonCreateMatchGeneraUnaSolaLinea() : void
++ roundTripTodosLosTiposDeMensajeConservanCampos() : void
++ jsonAMensajeTipoDesconocidoLanzaIllegalArgumentException() : void
++ jsonAMensajeCamposExtraLosIgnora() : void
++ roundTripGameStartedConEntidadPolimorficaResuelveAnimalCafeBandera() : void
 
-// El round trip se ejecuta una vez por cada valor de `TipoMensaje` (`@EnumSource`).
 
 #### MapaTest
-+ getInstance_siempreLaMismaInstancia() : void
-+ getZonas_devuelveTOTAL_ZONES() : void
-+ vecinos_sonSimetricos() : void
-+ getRuta_nodosEnDistintaZona_rutaConexa() : void
-+ getRuta_esLaMasCorta_verificadaConDijkstraManual() : void
-+ posicion_seguirRuta_avanzaConVelocidadConstante() : void
-+ posicion_seguirRuta_conDeltaTimeGrande_noSobrepasaElDestino() : void
-+ private boolean verificarConectividadZonas(int totalZones)
-+ private boolean comprobarSimetriaVecinos(Nodo nodoA, Nodo nodoB)
-+ private boolean comprobarVelocidadConstante(Posicion posInicial, Posicion posFinal, double delta)
++ getInstanceSiempreLaMismaInstancia() : void
++ getZonasDevuelveTotalZones() : void
++ vecinosSonSimetricos() : void
++ getRutaNodosEnDistintaZonaRutaConexa() : void
++ getRutaEsLaMasCortaVerificadaConDijkstraManual() : void
++ posicionSeguirRutaAvanzaConVelocidadConstante() : void
++ posicionSeguirRutaConDeltaTimeGrandeNoSobrepasaElDestino() : void
+- verificarConectividadZonas(int totalZones) : boolean
+- comprobarSimetriaVecinos(Nodo nodoA, Nodo nodoB) : boolean
+- comprobarVelocidadConstante(Posicion posInicial, Posicion posFinal, double delta) : boolean
 
 #### PartidaTest
-### Configuración:
-+ agregarJugador_tercerJugador_devuelveFalse() : void
-+ seleccionarEspecie_mismaEspecieDeLosDosJugadores_seRechaza() : void
-+ iniciarPartida_creaSietePacks_dosJugadoresYCincoBots() : void
-+ iniciarPartida_packsEnSieteZonasDistintas() : void
-+ iniciarPartida_diezCafesColocados() : void
 
-### Combate:
-+ ataque_restaDamageDelPack_alObjetivo() : void
-+ ataque_energiaLlegaACero_animalMuere() : void
-+ ataque_antesDelCooldown_noSeEjecuta_devuelveMenosUno() : void
-+ ejemploEnunciado_animal20EnergiaVsBot4x10_muereEn5s_yMataUnBot() : void
+// Configuración
++ agregarJugadorTercerJugadorDevuelveFalse() : void
++ seleccionarEspecieMismaEspecieDeLosDosJugadoresSeRechaza() : void
++ iniciarPartidaCreaSietePacksDosJugadoresYCincoBots() : void
++ iniciarPartidaPacksEnSieteZonasDistintas() : void
++ iniciarPartidaDiezCafesColocados() : void
 
-### Bonificaciones:
-+ cafe_incrementaDamageDeTodoElPack_yseConsumeUnaSolaVez() : void
-+ botsEliminados_cadaDos_suman1Energia_sinSuperarMAX_PLAYER_ENERGY() : void
+// Combate
++ ataqueRestaDamageDelPackAlObjetivo() : void
++ ataqueEnergiaLlegaACeroAnimalMuere() : void
++ ataqueAntesDelCooldownNoSeEjecutaDevuelveMenosUno() : void
++ ejemploEnunciadoAnimal20EnergiaVsBot4x10MuereEn5sYMataUnBot() : void
 
-### Victoria y visibilidad:
-+ bandera_tocadaPorRival_terminaPartidaYDeclaraGanador() : void
-+ verZona_sinAnimalesEnLaZona_seRechaza() : void
-+ construirDatos_noIncluyeEntidadesDeZonasNoVisibles() : void
+// Bonificaciones
++ cafeIncrementaDamageDeTodoElPackYSeConsumeUnaSolaVez() : void
++ botsEliminadosCadaDosSuman1EnergiaSinSuperarMaxPlayerEnergy() : void
 
-// Se usa seed fija y se avanza el tiempo con `ahora` explícito. Si los hilos de `Partida` dificultan la prueba, se ejercita `decidir(ahora)` directamente.
+// Victoria y visibilidad
++ banderaTocadaPorRivalTerminaPartidaYDeclaraGanador() : void
++ verZonaSinAnimalesEnLaZonaSeRechaza() : void
++ construirDatosNoIncluyeEntidadesDeZonasNoVisibles() : void
 
 #### ControladorTest
-+ crearJuego_devuelveCodigoDeLongitudCorrecta() : void
-+ crearJuego_codigosUnicosEntrePartidasActivas() : void
-+ unirsePartida_codigoInexistente_devuelveFalse() : void
-+ unirsePartida_codigoEnMinusculas_funcionaCaseInsensitive() : void
-+ unirsePartida_partidaLlena_devuelveFalse() : void
-+ jugadorDesconectado_elOtroJugadorGana() : void
-+ finalizarPartida_laRemueveDelMapa() : void
-+ private boolean validarLongitudYFormatoCodigo(String codigo)
-+ private boolean comprobarUnicidadCodigos(List<String> codigosActivos)
++ crearJuegoDevuelveCodigoDeLongitudCorrecta() : void
++ crearJuegoCodigosUnicosEntrePartidasActivas() : void
++ unirsePartidaCodigoInexistenteDevuelveFalse() : void
++ unirsePartidaCodigoEnMinusculasFuncionaCaseInsensitive() : void
++ unirsePartidaPartidaLlenaDevuelveFalse() : void
++ jugadorDesconectadoElOtroJugadorGana() : void
++ finalizarPartidaLaRemueveDelMapa() : void
+- validarLongitudYFormatoCodigo(String codigo) : boolean
+- comprobarUnicidadCodigos(List<String> codigosActivos) : boolean
 
-// `Servidor` falso (stub/Mockito) que guarda los mensajes enviados.
-// Decisión documentada: si un jugador se desconecta, el rival gana.
 
 ## Spec Cliente
 
@@ -1053,6 +1158,8 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
  
 ```
 src/
+|-- main/
+    |-- Main.java
 |-- client/
     |-- constantes/
         |-- Constants.java
@@ -1083,6 +1190,14 @@ src/
         |-- MensajeError.java
     |-- modelo/
         |-- GameModel.java
+        |-- AccionDeMensaje.java
+        |-- AccionMensaje.java
+        |-- AccionMatchCreated.java
+        |-- AccionMatchJoined.java
+        |-- AccionAnimalSelection.java
+        |-- AccionGameStarted.java
+        |-- AccionGameOver.java
+        |-- AccionError.java
         |-- Datos.java
         |-- Jugador.java
         |-- Entidad.java
@@ -1105,8 +1220,15 @@ src/
         |-- GamePanel.java
         |-- HUDPanel.java
     |-- util/
+        |-- Observer.java
+        |-- Observable.java
         |-- ImageCache.java
         |-- Json.java
+|-- test/
+    |-- JsonTest.java
+    |-- MessageDispatcherTest.java
+    |-- GameModelTest.java
+    |-- SelectionManagerTest.java
 ```
  
 ### main
@@ -1131,7 +1253,6 @@ src/
 // SERVER_IP = "localhost". SERVER_PORT debe ser igual a ServerConfig.getPuerto() del servidor.
 // NOMBRE_UNIVERSAL = "@Todos": el cliente no puede usarlo como nickname.
 // LONGITUD_CODIGO = 4. Los valores numéricos deben coincidir con Constantes del servidor.
-// ENCOUNTER_RADIUS se usa solo para pintar el alcance de ataque.
 
 #### UIConstants (Clase final)
 + WINDOW_WIDTH : static final int
@@ -1275,11 +1396,6 @@ src/
 + getVivos() : int
 + getEnergiaTotal() : int
 
-// Espejo de Jugador (extends Pack) del servidor. id es el idPack usado en int[]{idPack, idAnimal}.
-// Los animales de un jugador pueden venir incompletos: solo llegan los visibles desde la zona actual.
-// getVivos() y getEnergiaTotal() se calculan a partir de la lista de animales; no son campos del JSON
-// (Jackson está configurado sin autodetección de getters, así que nunca se serializan ni se exigen).
-
 #### TipoEntidad (enum)
 + ANIMAL
 + CAFE
@@ -1294,12 +1410,6 @@ src/
 + getTipo() : TipoEntidad
 + getPosicion() : Posicion
 
-// Espejo de Entidad del servidor.
-// Polimorfismo con anotaciones de Jackson sobre esta clase:
-//   @JsonTypeInfo(use = Id.NAME, include = As.EXISTING_PROPERTY, property = "tipo", visible = true)
-//   @JsonSubTypes({ @Type(value = Animal.class, name = "ANIMAL"), @Type(value = Cafe.class, name = "CAFE"), @Type(value = Bandera.class, name = "BANDERA") })
-// EXISTING_PROPERTY usa el campo "tipo" que ya existe (no lo duplica) y visible = true lo conserva para llenar Entidad.tipo.
-// Los nombres de @Type deben coincidir con TipoEntidad.name(). Como la anotación se hereda, Jugador.animales (List<Animal>) también exige "tipo":"ANIMAL".
 
 #### Animal (extends Entidad)
 - idPack : int
@@ -1314,11 +1424,6 @@ src/
 + getY() : double
 + getIdCompuesto() : int[]
 
-// Representa a un animal para ser renderizado. En el servidor Animal tiene referencia a Pack, pero aquí solo se guarda idPack
-// para evitar referencias circulares.
-// getIdCompuesto() devuelve int[]{idPack, id}, el formato de MensajeMoveAnimals y MensajeAttack.
-// getX() y getY() delegan en getPosicion().getPunto().
-
 #### Cafe (extends Entidad)
 - consumido : boolean
 + Cafe()
@@ -1332,8 +1437,6 @@ src/
 + getIdJugador() : int
 + getColor() : String
 
-// En el servidor Bandera tiene una referencia a Jugador. El cliente solo necesita el id del dueño (idPack del Jugador).
-
 #### TipoEvento (enum)
 + ATAQUE
 
@@ -1346,9 +1449,6 @@ src/
 + getOrigen() : Posicion
 + getDestino() : Posicion
 
-// GamePanel dibuja una línea entre origen y destino durante UIConstants.DURACION_EVENTO_MS al recibir el evento.
-// Como Evento se recrea en cada snapshot, no se usa como llave de eventosActivos por identidad: se compara por origen, destino y tipo (ver comentarios finales).
-
 #### Zona
 - id : int
 - nodos : List\<Nodo>
@@ -1356,9 +1456,6 @@ src/
 + getId() : int
 + getNodos() : List\<Nodo>
 + getNodo(idNodo : int) : Nodo
-
-// Espejo de Zona. El campo id no existe en la Zona del servidor (ver comentarios al final): el cliente lo necesita para VIEW_ZONE.
-// El campo Zona.mapa del servidor no se mapea. Si llegara en el JSON, Jackson lo ignora (FAIL_ON_UNKNOWN_PROPERTIES desactivado).
 
 #### Nodo
 - id : int
@@ -1369,18 +1466,12 @@ src/
 + getPosicion() : Punto
 + getIdZona() : int
 
-// En el servidor Nodo apunta a su Zona. El cliente solo guarda el id para evitar un ciclo Nodo <-> Zona.
-// El id del nodo es el mismo que se manda como idNodoDestino en MensajeMoveAnimals.
-
 #### Posicion
 - nodo : Nodo
 - punto : Punto
 + Posicion()
 + getNodo() : Nodo
 + getPunto() : Punto
-
-// Posición lógica (nodo) y posición real en el plano (punto). El punto es el que se dibuja.
-// "nodo" puede venir null o incompleto (solo id y posicion) para no repetir toda la zona en cada entidad.
 
 #### Punto
 - x : double
@@ -1399,8 +1490,6 @@ src/
 + VENADO_CO_BLA
 + MONO_CO_BLA
 + NINGUNA
-
-// Debe ser idéntico al del servidor: Jackson serializa los enums por nombre (no usar WRITE_ENUMS_USING_TO_STRING ni WRITE_ENUMS_USING_INDEX).
 
 ### controlador
 
@@ -1850,45 +1939,41 @@ src/
 // tipo = ERROR
 // Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
 
-## Spec Cliente Test
+### Test
 
-### JsonTest
-+ mensajeAJson_envuelveEnTypeYPayload_enUnaSolaLinea() : void
-+ jsonAMensaje_typeDesconocido_lanzaIllegalArgumentException() : void
-+ jsonAMensaje_payloadNoEncaja_lanzaIllegalArgumentException() : void
-+ roundTrip_todosLosTiposDeMensaje() : void
-+ deserializar_entidadAnimalCafeBandera_resuelveSubtipoPorTipo() : void
-+ deserializar_posicionConNodoNull_noFalla() : void
+#### JsonTest
++ mensajeAJsonEnvuelveEnTypeYPayloadEnUnaSolaLinea() : void
++ jsonAMensajeTypeDesconocidoLanzaIllegalArgumentException() : void
++ jsonAMensajePayloadNoEncajaLanzaIllegalArgumentException() : void
++ roundTripTodosLosTiposDeMensaje() : void
++ deserializarEntidadAnimalCafeBanderaResuelveSubtipoPorTipo() : void
++ deserializarPosicionConNodoNullNoFalla() : void
 
-// Contrato cliente-servidor: guardar en `src/test/resources` un JSON de `DatosEnviar` generado por el servidor y comprobar que el cliente lo deserializa.
-
-### MessageDispatcherTest
-+ despachar_matchCreated_invocaOnMatchCreated() : void
-+ despachar_gameStarted_invocaOnGameStarted() : void
-+ despachar_stateUpdate_invocaActualizarEstado() : void
-+ despachar_gameOver_invocaOnGameOver() : void
-+ despachar_jsonInvalido_noLanzaExcepcion_ni_tocaElModelo() : void
-+ despachar_mensajeClienteAServidor_seDescarta() : void
-+ conexionPerdida_invocaOnDesconexion() : void
-
-// Se espera el `invokeLater` con `SwingUtilities.invokeAndWait` vacío, o se inyecta un ejecutor. El modelo es un spy de `GameModel` que registra las llamadas.
+#### MessageDispatcherTest
++ despacharMatchCreatedInvocaOnMatchCreated() : void
++ despacharGameStartedInvocaOnGameStarted() : void
++ despacharStateUpdateInvocaActualizarEstado() : void
++ despacharGameOverInvocaOnGameOver() : void
++ despacharJsonInvalidoNoLanzaExcepcionNiTocaElModelo() : void
++ despacharMensajeClienteAServidorSeDescarta() : void
++ conexionPerdidaInvocaOnDesconexion() : void
 
 #### GameModelTest
-+ onPrimerMensaje_exitoTrue_nombreConfirmado() : void
-+ onPrimerMensaje_exitoFalse_guardaRazonComoUltimoError() : void
-+ onMatchJoined_guardaCodigoYJugadores() : void
-+ onGameStarted_guardaDatos_yZonaVisibleInicial() : void
-+ actualizarEstado_recuerdaAnimalesConocidos() : void
-+ getJugadorLocal_identificaPorNickname() : void
-+ reiniciarPartida_limpiaElEstado_peroConservaNickname() : void
-+ cadaCambio_notificaObservadoresConElTipoMensajeCorrecto() : void
-+ private boolean validarEstadoVisibleZona(int idZona)
++ onPrimerMensajeExitoTrueNombreConfirmado() : void
++ onPrimerMensajeExitoFalseGuardaRazonComoUltimoError() : void
++ onMatchJoinedGuardaCodigoYJugadores() : void
++ onGameStartedGuardaDatosYZonaVisibleInicial() : void
++ actualizarEstadoRecuerdaAnimalesConocidos() : void
++ getJugadorLocalIdentificaPorNickname() : void
++ reiniciarPartidaLimpiaElEstadoPeroConservaNickname() : void
++ cadaCambioNotificaObservadoresConElTipoMensajeCorrecto() : void
+- validarEstadoVisibleZona(int idZona) : boolean
 
 #### SelectionManagerTest
-+ seleccionar_animalVivoLocal_seAgrega() : void
-+ seleccionar_animalMuerto_seRechaza() : void
-+ seleccionar_animalDeOtroJugador_seRechaza() : void
-+ seleccionar_dosVeces_noDuplica() : void
-+ getIdsSeleccionados_devuelveIdPackEIdAnimal() : void
-+ sincronizar_quitaAnimalesQueYaNoEstanVivosONiVigentes() : void
-+ private boolean isAnimalSeleccionable(Animal animal)
++ seleccionarAnimalVivoLocalSeAgrega() : void
++ seleccionarAnimalMuertoSeRechaza() : void
++ seleccionarAnimalDeOtroJugadorSeRechaza() : void
++ seleccionarDosVecesNoDuplica() : void
++ getIdsSeleccionadosDevuelveIdPackEIdAnimal() : void
++ sincronizarQuitaAnimalesQueYaNoEstanVivosONiVigentes() : void
+- isAnimalSeleccionable(Animal animal) : boolean
