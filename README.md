@@ -913,9 +913,8 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + getId() : int
 + getPosicion() : Punto
 + getZona() : Zona
-+ equals(Object) : boolean
-+ hashCode() : int
 + getEnviable() : NodoEnviar
+
 
 #### Vecinos
 - nodoA : Nodo
