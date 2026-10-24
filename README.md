@@ -875,6 +875,7 @@ de movimientos
 + haTerminado() : boolean
 
 #### Mapa (singleton)
+- instance : Static Mapa
 - zonas : List\<Zona>
 - vecinos : Map\<Nodo, List\<Vecinos>>
 - Mapa()
@@ -882,13 +883,12 @@ de movimientos
 - crearNodos() : void
 - crearVecinos() : void
 - crearMapaVecinos() : void
-- crearMapa() : Mapa
 + getInstance() : Mapa
 + getRuta(nodoA : Nodo, nodoB : Nodo) : Ruta
 + getZonas() : List\<Zona>
 + getVecinos() : Map\<Nodo, List\<Vecinos>>
 + getVecinosDe(Nodo) : List\<Vecinos>
-+ getPeso(Nodo, Nodo) : Double
++ getPeso(Nodo, Nodo) : double
 
 // Primero se crean las zonas, despues se crean los nodos y se insertan en las zonas y finalmente se crean los vecinos, al crear 
 los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar crear el mismo objeto 2 veces.
@@ -919,11 +919,11 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 #### Vecinos
 - nodoA : Nodo
 - nodoB : Nodo
-- peso : Double
-+ Vecinos(Nodo, Nodo, Double)
+- peso : double
++ Vecinos(Nodo, Nodo, double)
 + getNodoA() : Nodo
 + getNodoB() : Nodo
-+ getPeso() : Double
++ getPeso() : double
 + formaParte(Nodo) : boolean
 + getOtro(Nodo) : Nodo
 

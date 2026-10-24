@@ -1,4 +1,6 @@
 package src.mapa;
+import java.util.Objects;
+
 import src.utilidades.*;
 public class Nodo {
     private int id; //Id en zona
@@ -23,5 +25,15 @@ public class Nodo {
         boolean reque2 = this.id == nodo.getId();
         boolean reque3 = this.zona.getId() == nodo.getZona().getId();
         return reque1 && reque2 && reque3;
+    }
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Nodo n && this.igual(n);
+    }
+
+    @Override
+    public int hashCode() {
+        //El objeto se distingue en hashmaps por su id y zona no por la direccion de memoria real de este
+        return Objects.hash(id, zona.getId());
     }
 }
