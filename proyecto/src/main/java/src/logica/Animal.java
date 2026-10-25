@@ -8,6 +8,7 @@ import src.mapa.Zona;
 public abstract class Animal extends Entidad {
 
     private final AtomicInteger energia;
+    private volatile Pack pack;
     private volatile Ruta ruta;
     private volatile Zona zonaActual;
 
@@ -19,6 +20,17 @@ public abstract class Animal extends Entidad {
 
     public int getEnergia() {
         return energia.get();
+    }
+
+    public Pack getPack() {
+        return pack;
+    }
+
+    void asignarPack(Pack pack) {
+        if (this.pack != null && this.pack != pack) {
+            throw new IllegalStateException("El animal ya pertenece a otro pack.");
+        }
+        this.pack = pack;
     }
 
     public void setRuta(Ruta ruta) {
