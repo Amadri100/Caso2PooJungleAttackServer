@@ -1,0 +1,19 @@
+package src.mensajes;
+
+public enum TipoMensaje {
+    PRIMER_MENSAJE, 
+    INDICAR_NOMBRE,
+    CREATE_MATCH, 
+    JOIN_MATCH,
+    SELECT_ANIMAL,
+    MOVE_ANIMALS,
+    ATTACK,VIEW_ZONE, 
+    MATCH_CREATED,
+    MATCH_JOINED,
+    ANIMAL_SELECTION,
+    GAME_STARTED,
+    STATE_UPDATE,
+    GAME_OVER,
+    ERROR;
+    
+}

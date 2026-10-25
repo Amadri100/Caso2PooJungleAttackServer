@@ -187,7 +187,6 @@ src/
 #### NivelLog (enum)
 + DEBUG
 + INFO
-+ WARN
 + ERROR
 
 #### EntradaLog
@@ -195,7 +194,7 @@ src/
 - nivel : NivelLog
 - origen : String          
 - mensaje : String
-+ EntradaLog(momento : LocalDateTime, nivel : NivelLog, origen : String, mensaje : String)
++ EntradaLog(nivel : nivelLog, origen : String, mensaje : String)
 + getMomento() : LocalDateTime
 + getNivel() : NivelLog
 + getOrigen() : String
@@ -223,11 +222,7 @@ src/
 + agregarListener(listener : LogListener) : void
 + removerListener(listener : LogListener) : void
 + getHistorial() : List\<EntradaLog>         
-+ log(nivel : NivelLog, origen : String, mensaje : String) : void
-+ debug(origen : String, mensaje : String) : void
-+ info(origen : String, mensaje : String) : void
-+ warn(origen : String, mensaje : String) : void
-+ error(origen : String, mensaje : String, causa : Throwable) : void
++ crearLog(nivel : NivelLog origen : String, mensaje : String, causa : Throwable)
 - escribirEnArchivo(entrada : EntradaLog) : void
 - notificarListeners(entrada : EntradaLog) : void
 
@@ -373,7 +368,7 @@ src/
 + mandarACliente(nombre : String, msg : MensajeServidor) : void
 + mandarATodos(msg : MensajeServidor) : void
 + mandarASistema(msg : MensajeJugador) : void
- + getCantidadClientes() : int
++ getCantidadClientes() : int
  
 // Se manda el mensaje segun el nombre que esta asociado al dato, si tiene el NOMBRE_UNIVERSAL, se manda ese mismo mensaje a todos
 los clientes.
@@ -812,7 +807,7 @@ de movimientos
 
 #### Bandera (extends Entidad)
 - jugador : Jugador
-- color : String
+- color : java.awt.Color
 + fueTocadaPor(Animal animal) : boolean
 + getEnviable() : BanderaEnviar
 
@@ -946,7 +941,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + GAME_OVER
 + ERROR
 
-#### Mensaje (abstract)
+#### Mensaje 
 - tipo : TipoMensaje
 + Mensaje(tipo : TipoMensaje, nombre : String)
 + getTipo() : TipoMensaje
@@ -954,14 +949,14 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 // Clase base de todos los mensajes.
 // Si nombre es Constantes.NOMBRE_UNIVERSAL (@Todos), el servidor lo manda a todos los clientes
 
-#### MensajeJugador (abstract, extends Mensaje)
+#### MensajeJugador (extends Mensaje)
 - nombre : String
 + MensajeJugador(tipo : TipoMensaje, nombre : String)
 + getNombre() : String
 + setNombre(nombre : String) : void
 // Agrupa todos los mensajes cliente -> servidor..
 
-#### MensajeServidor (abstract, extends Mensaje)
+#### MensajeServidor (extends Mensaje)
 + MensajeServidor(tipo : TipoMensaje)
 
 // Agrupa todos los mensajes servidor -> cliente.
