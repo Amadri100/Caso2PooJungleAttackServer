@@ -13,19 +13,19 @@ import src.utilidades.Constantes;
 import src.controlador.Controlador;
 public class Servidor {
 
-    private final Controlador controlador;
+    private Controlador controlador;
     // Clientes que ya tienen nombre
-    private final ConcurrentHashMap<String, ClientHandler> clientes;
+    private ConcurrentHashMap<String, ClientHandler> clientes;
     // Clientes conectados que todavía no han recibido nombre
-    private final CopyOnWriteArrayList<ClientHandler> conectados;
+    private CopyOnWriteArrayList<ClientHandler> conectados;
     private ThreadConexiones threadConexiones;
-    private final ExecutorService executor;
+    private ExecutorService executor;
 
-    public Servidor() {
+    public Servidor(Controlador controlador) {
         this.clientes = new ConcurrentHashMap<>();
         this.conectados = new CopyOnWriteArrayList<>();
         this.executor = Executors.newCachedThreadPool();
-        this.controlador = new Controlador();
+        this.controlador = controlador;
     }
 
     public void iniciar() {
