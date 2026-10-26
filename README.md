@@ -601,8 +601,8 @@ los clientes.
 - controlador : Controlador
 - codigo : String
 - estado : EstadoPartida
-- jugadores : ArrayList\<Jugador>
-- bots : ArrayList\<Bot>
+- jugadores : ArrayList\<ThreadJugador>
+- bots : ArrayList\<ThreadBot>
 - manadas : ArrayList\<Pack>
 - cafes : ArrayList\<Cafe>
 - banderas : ArrayList\<Bandera>
