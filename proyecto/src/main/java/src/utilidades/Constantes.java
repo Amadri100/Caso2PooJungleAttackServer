@@ -25,6 +25,14 @@ public final class Constantes {
     public static final int INTERVALO_REFRESCO_UI_MS = 50;  
     public static final int MAX_LINEAS_CONSOLA = 200;     
     public static final int MAX_HISTORIAL_LOG = 1000;   
+
+    public static final String ORIGEN_SERVER = "Servidor";
+
+    public static final String SEPARADOR_ERROR = ": ";
+
+    public static final String ERROR_NOMBRE_NO_DISPONIBLE = "El nombre ya esta reservado";
+    public static final String NO_HAY_ERROR = "NO ERROR";
+    public static final String ERROR_INICIO_SERVER = "No se pudo inicializar el serverSocket, razon: ";
     public static final String ERROR_SERIALIZACION = "No se pudo serializar el mensaje";
     public static final String ERROR_DESERIALIZACION = "No se pudo serializar el mensaje";
     public static final String CAMPO_TIPO = "tipo";

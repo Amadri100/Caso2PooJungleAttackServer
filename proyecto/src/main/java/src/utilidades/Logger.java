@@ -18,8 +18,8 @@ public class Logger {
 
     }
     //Temp
-    public Logger getInstance() {
-        return this.instancia;
+    public static Logger getInstance() {
+        return instancia;
     }
     public void iniciar(String ruta) {}
     public void cerrar() {}

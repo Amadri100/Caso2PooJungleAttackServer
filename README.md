@@ -936,7 +936,7 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 + GAME_STARTED
 + STATE_UPDATE
 + GAME_OVER
-+ ERROR
++ CASO
 
 #### Mensaje 
 - tipo : TipoMensaje
@@ -1076,13 +1076,16 @@ los vecinos de un nodo, se agrega ese mismo vecino al nodo A y al B para evitar 
 
 // tipo = GAME_OVER
 
-#### MensajeError (extends MensajeServidor)
+#### MensajeCaso (extends MensajeServidor)
+- caso : boolean
 - descripcion : String
 + MensajeError(descripcion : String)
 + getDescripcion() : String
++ isCaso() : boolean
 
-// tipo = ERROR
-// Solo se usa si el cliente puede hacer algo al respecto; las desconexiones se manejan con excepciones del socket.
+
+// tipo = CASO
+// Indica error si caso = false, de lo contrario no hay error y se acepto; 
 
 ### Test
 

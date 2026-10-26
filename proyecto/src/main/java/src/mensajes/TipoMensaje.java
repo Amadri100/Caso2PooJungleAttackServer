@@ -14,6 +14,6 @@ public enum TipoMensaje {
     GAME_STARTED,
     STATE_UPDATE,
     GAME_OVER,
-    ERROR;
+    CASO;
     
 }
