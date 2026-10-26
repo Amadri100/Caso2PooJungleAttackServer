@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.UncheckedIOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
@@ -13,6 +12,7 @@ import src.mensajes.MensajeCaso;
 import src.mensajes.MensajeIndicarNombre;
 import src.mensajes.MensajeJugador;
 import src.mensajes.MensajeServidor;
+import src.mensajes.TipoMensaje;
 import src.utilidades.Constantes;
 import src.utilidades.Json;
 
@@ -26,37 +26,42 @@ public class ClientHandler implements Runnable {
     private volatile String nombre;
     private volatile boolean activo;
 
-    public ClientHandler(Socket socket, Servidor servidor) {
+    public ClientHandler(Socket socket, Servidor servidor) throws IOException {
         this.socket = socket;
         this.servidor = servidor;
         this.activo = true;
-        try {
-            this.entrada = new BufferedReader(
-                    new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-            this.salida = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        InputStreamReader input = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
+        this.entrada = new BufferedReader(input);
+        this.salida = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
+
     }
 
     @Override
     public void run() {
+        String linea;
+        Mensaje recibido;
         try {
-            String linea;
             while (activo && (linea = entrada.readLine()) != null) {
-                Mensaje recibido;
                 try {
                     recibido = Json.jsonA(linea);
                 } catch (IllegalArgumentException e) {
                     // JSON vacío o inválido: se ignora la línea
                     continue;
                 }
-                if (recibido instanceof MensajeIndicarNombre) {
+                if (recibido.getTipo() == TipoMensaje.INDICAR_NOMBRE) {
                     manejarNombre((MensajeIndicarNombre) recibido);
                 } else if (recibido instanceof MensajeJugador && nombre != null) {
                     // Solo se aceptan mensajes de clientes que ya tienen nombre
                     ascenderMensaje((MensajeJugador) recibido);
                 }
+                try {
+                    Thread.sleep(Constantes.TIEMPO_SLEEP_MINIMO);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); 
+                }
+                
+
             }
         } catch (IOException e) {
             // Conexión perdida o cerrada: se limpia en el finally
@@ -92,7 +97,7 @@ public class ClientHandler implements Runnable {
 
     // Entrega el mensaje recibido al servidor, que lo pasa al sistema
     public void ascenderMensaje(MensajeJugador mensaje) {
-        servidor.procesarMensaje(this, mensaje);
+        servidor.mandarASistema(mensaje);
     }
 
     public synchronized void cerrar() {

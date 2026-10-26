@@ -26,6 +26,8 @@ public final class Constantes {
     public static final int MAX_LINEAS_CONSOLA = 200;     
     public static final int MAX_HISTORIAL_LOG = 1000;   
 
+    public static final long TIEMPO_SLEEP_MINIMO = 20;
+
     public static final String ORIGEN_SERVER = "Servidor";
 
     public static final String SEPARADOR_ERROR = ": ";

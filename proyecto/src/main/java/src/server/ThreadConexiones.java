@@ -17,14 +17,13 @@ public class ThreadConexiones implements Runnable {
         this.serverSocket = new ServerSocket(puerto);
     }
 
-    // Hilo que acepta conexiones. Por cada Socket crea un ClientHandler
-    // y se lo entrega a Servidor.registrarCliente().
+
     @Override
     public void run() {
         while (activo) {
             Socket socket = null;
             try {
-                socket = serverSocket.accept(); //El codigo se queda aqui hasta recibir una señal
+                socket = serverSocket.accept(); //El codigo se queda aqui hasta recibir una conexion
                 ClientHandler handler = new ClientHandler(socket, servidor);
                 servidor.registrarCliente(handler);
             } catch (IOException | UncheckedIOException e) {
@@ -46,7 +45,6 @@ public class ThreadConexiones implements Runnable {
     public void detener() {
         activo = false;
         try {
-            // Cerrar el ServerSocket desbloquea el accept() que está esperando
             serverSocket.close();
         } catch (IOException e) {
             // Ya estaba cerrado

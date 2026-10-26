@@ -1,7 +1,6 @@
 package src.server;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +24,6 @@ public class Servidor {
     private ThreadConexiones threadConexiones;
     private ExecutorService executor;
 
-    // Se usa cuando el Controlador se crea después (Controlador necesita el Servidor en su constructor)
     public Servidor() {
         this.clientes = new ConcurrentHashMap<>();
         this.conectados = new CopyOnWriteArrayList<>();
@@ -41,7 +39,7 @@ public class Servidor {
         this.controlador = controlador;
     }
 
-    public boolean iniciar() {
+    public boolean iniciar() { //Intenta iniciar el servidor y la busqueda de conexiones
         int port = ServerConfig.getInstance().getPuerto();
         try {
             threadConexiones = new ThreadConexiones(this, port);
@@ -52,11 +50,9 @@ public class Servidor {
             Logger.getInstance().crearLog(NivelLog.ERROR, Constantes.ORIGEN_SERVER, Constantes.ERROR_INICIO_SERVER, e);
         }
         return false;
-        
-
     }
 
-    public void detener() {
+    public void detener() {  
         if (threadConexiones != null) {
             threadConexiones.detener();
         }
@@ -71,23 +67,22 @@ public class Servidor {
         executor.shutdownNow();
     }
 
-    // Lo llama ThreadConexiones por cada socket aceptado
+    // Registra un cliente aceptado
     public void registrarCliente(ClientHandler handler) {
         conectados.add(handler);
         executor.execute(handler);
     }
 
-    // Reserva el nombre y mueve al cliente de "conectados" a "clientes".
-    // Devuelve false si el cliente ya tenía nombre o si el nombre está ocupado.
+    //Le asigna el nombre al cliente, true = exito, false = fallo
     public synchronized boolean asignarNombre(ClientHandler handler, String nombre) {
-        if (nombre == null || nombre.isBlank() || nombre.equals(Constantes.NOMBRE_UNIVERSAL)) {
+        if (nombre == null || nombre.isBlank() || nombre.equals(Constantes.NOMBRE_UNIVERSAL)) { 
+            //Evita nombres invalidados
             return false;
         }
-        // Si no está en "conectados", ya tenía nombre (o ya fue removido)
-        if (!conectados.contains(handler)) {
+        if (!conectados.contains(handler)) { //Evita agregarlo si ya tiene nombre
             return false;
         }
-        if (clientes.putIfAbsent(nombre, handler) != null) {
+        if (clientes.putIfAbsent(nombre, handler) != null) { //Lo agrega pero si 
             return false;
         }
         conectados.remove(handler);
@@ -97,20 +92,12 @@ public class Servidor {
     public void removerCliente(ClientHandler handler) {
         conectados.remove(handler);
 
-        String nombre = null;
-        for (Map.Entry<String, ClientHandler> entrada : clientes.entrySet()) {
-            if (entrada.getValue() == handler) {
-                nombre = entrada.getKey();
-                break;
-            }
-        }
-
+        String nombre = handler.getNombre();
         if (nombre != null && clientes.remove(nombre, handler) && controlador != null) {
             controlador.jugadorDesconectado(nombre);
         }
     }
 
-    // Si el nombre es NOMBRE_UNIVERSAL, el mensaje se envía a todos los clientes
     public void mandarACliente(String nombre, MensajeServidor msg) {
         if (Constantes.NOMBRE_UNIVERSAL.equals(nombre)) {
             mandarATodos(msg);
@@ -140,8 +127,7 @@ public class Servidor {
         mandarASistema(msg);
     }
 
-    // Cantidad de clientes con nombre asignado
-    public int getCantidadClientes() {
+    public int getCantidadClientes() { //Unicamente clientes con nombres ya asignados
         return clientes.size();
     }
 }
