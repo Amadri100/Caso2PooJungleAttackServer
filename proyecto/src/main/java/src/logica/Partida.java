@@ -46,7 +46,7 @@ public class Partida implements Runnable {
         return estado;
     }
 
-    public boolean agregarJugador(String nickname) {
+    public boolean agregarJugador(String nickname) { //Termina de iniciar la partida
         return false;
     }
 

@@ -25,6 +25,8 @@ public final class Constantes {
     public static final int INTERVALO_REFRESCO_UI_MS = 50;  
     public static final int MAX_LINEAS_CONSOLA = 200;     
     public static final int MAX_HISTORIAL_LOG = 1000;   
+    public static final String CARACTERES_CODIGO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
 
     public static final long TIEMPO_SLEEP_MINIMO = 20;
 
