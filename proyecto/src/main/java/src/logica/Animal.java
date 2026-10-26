@@ -14,12 +14,22 @@ public abstract class Animal extends Entidad {
 
     protected Animal(int id, Posicion posicion, int energia) {
         super(id, TipoEntidad.ANIMAL, posicion);
+        if (energia < 0) {
+            throw new IllegalArgumentException("La energía no puede ser negativa.");
+        }
         this.energia = new AtomicInteger(energia);
+        actualizarZonaActual(posicion);
     }
-
 
     public int getEnergia() {
         return energia.get();
+    }
+
+    public void recibirDamage(int cantidad) {
+        if (cantidad < 0) {
+            throw new IllegalArgumentException("El daño no puede ser negativo.");
+        }
+        energia.updateAndGet(actual -> Math.max(0, actual - cantidad));
     }
 
     public Pack getPack() {
@@ -45,9 +55,20 @@ public abstract class Animal extends Entidad {
         return zonaActual;
     }
 
+    @Override
+    public void setPosicion(Posicion posicion) {
+        super.setPosicion(posicion);
+        actualizarZonaActual(posicion);
+    }
 
     public boolean estaVivo() {
         return energia.get() > 0;
+    }
+
+    private void actualizarZonaActual(Posicion posicion) {
+        zonaActual = posicion == null || posicion.getNodo() == null
+                ? null
+                : posicion.getNodo().getZona();
     }
 
 }
