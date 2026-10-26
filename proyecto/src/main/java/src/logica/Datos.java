@@ -1,6 +1,5 @@
 package src.logica;
 import src.mapa.Zona;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Datos {
@@ -16,14 +15,14 @@ public class Datos {
                  Zona zonaActual, List<Evento> eventos) {
         this.jugadorA = jugadorA;
         this.jugadorB = jugadorB;
-        this.entidadesDisponibles = new ArrayList<>(entidadesDisponibles);
+        this.entidadesDisponibles = List.copyOf(entidadesDisponibles);
         this.zonaActual = zonaActual;
-        this.eventos = new ArrayList<>(eventos);
+        this.eventos = List.copyOf(eventos);
     }
 
     public Jugador getJugadorA() { return jugadorA; }
     public Jugador getJugadorB() { return jugadorB; }
-    public List<Entidad> getEntidadesDisponibles() { return entidadesDisponibles; }
+    public List<Entidad> getEntidadesDisponibles() { return entidadesDisponibles; } // colección de entidades
     public Zona getZonaActual() { return zonaActual; }
     public List<Evento> getEventos() { return eventos; }
 
