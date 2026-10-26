@@ -400,7 +400,7 @@ los clientes.
 - ejecutorMensajes : EjecutorMensajes
 + Controlador(servidor : Servidor)
 + ejecutarMensaje(msg : MensajeJugador) : void
-+ actualizarEstado(datos : HashMap\<String, DatosEnviar>) : void
++ actualizarEstado(datos : ArrayList\<DatosEnviar>) : void
 + enviar(nombre : String, msg : MensajeServidor) : void
 + enviarATodos(msg : MensajeServidor) : void
 + crearJuego(nickname : String) : String
@@ -464,11 +464,6 @@ los clientes.
 + getZonaActual() : ZonaEnviar
 + getEventos() : List\<EventoEnviar>
 + static desde(datos : Datos) : DatosEnviar
-
-// Reemplaza a Datos en MensajeGameStarted y MensajeStateUpdate.
-// desde(): jugadorB puede ser null (el oponente aún no está). Las listas se copian a listas nuevas inmutables (List.copyOf).
-// El campo se llama "eventos" (no "evento"), igual que el cliente.
-// Se debe llamar dentro del lock de Partida (snapshot consistente), ver comentarios finales.
 
 #### JugadorEnviar 
 - id : int
@@ -628,7 +623,7 @@ los clientes.
 + mandarAtaque(nombre : String, A : int[], B : int[]) : void
 + verZona(nombre : String, idZona : int) : void
 + registrarEvento(evento : Evento) : void
-+ notificar(datos : HashMap\<String, DatosEnviar>) : void
++ notificar(datos : ArrayList\<DatosEnviar>) : void
 + finalizar(ganador : Jugador) : boolean
 + getResumen() : ResumenPartida
 - asignarZonas() : void
@@ -637,7 +632,7 @@ los clientes.
 - crearCafes() : void
 - filtrarZona(jugador : Jugador) : Zona
 - obtenerDatos(jugador : Jugador) : DatosEnviar
-- construirDatos() : HashMap\<String, DatosEnviar>
+- construirDatos() : ArrayList\<DatosEnviar> 
 
 //eventosPendientes: eventos que sucedieron antes de notificar.
 // El cliente al elegir un animal se elige el animal como {idPack, idDelAnimal} y lo mismo para el enemigo por lo 
@@ -824,6 +819,8 @@ de movimientos
 + getDestino() : Posicion
 + getEnviable() : EventoEnviar
 
+
+//Modelado en base a los datos conocidos por el jugadorA
 #### Datos:
 - jugadorA : Jugador
 - jugadorB : Jugador
