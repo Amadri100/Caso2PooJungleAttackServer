@@ -35,6 +35,22 @@ public final class Constantes {
     public static final String RUTA_ARCHIVO = "Log.log";
     public static final String ORIGEN_SERVER = "Servidor";
 
+
+    public static final int MAX_JUGADORES_PARTIDA = 2;
+    public static final long INTERVALO_ACTUALIZACION_MS = 100;
+    public static final String ORIGEN_PARTIDA = "Partida";
+
+
+    public static final String ERROR_PARTIDA_ESTADO_INVALIDO = "La partida no está en el estado necesario para esa acción";
+    public static final String ERROR_PARTIDA_JUGADOR_NO_ENCONTRADO = "No perteneces a esta partida";
+    public static final String ERROR_PARTIDA_ESPECIE_NO_DISPONIBLE = "La especie no está disponible";
+    public static final String ERROR_PARTIDA_ESPECIE_YA_ELEGIDA = "Ya elegiste una especie";
+    public static final String ERROR_PARTIDA_ANIMAL_AJENO = "Solo puedes dar órdenes a tus propios animales";
+    public static final String ERROR_PARTIDA_ATAQUE_INVALIDO = "Ataque inválido";
+    public static final String ERROR_PARTIDA_ZONA_NO_VISIBLE = "No tienes animales en esa zona";
+
+    public static final String ERROR_PARTIDA_ENVIAR_ESTADO = "Error al construir o enviar el estado de la partida";
+
     public static final String SEPARADOR_ERROR = ": ";
     public static final String ESPACIO_ENTRE_TEXTO = ", ";
     public static final String TEXTO_DEFECTO = "DEFECTO";

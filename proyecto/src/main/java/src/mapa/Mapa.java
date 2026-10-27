@@ -85,6 +85,16 @@ public class Mapa {
         return new Ruta(camino); 
     }
 
+    public Nodo getNodo(int[] idNodo) {
+        Nodo resultado = null;
+        if (this.zonas.size() > idNodo[0]) {
+            Zona zonaTemp = this.zonas.get(idNodo[0]);
+            if (zonaTemp.getNodos().size() > idNodo[1]) {
+                resultado = zonaTemp.getNodos().get(idNodo[1]);
+            }
+        }
+        return resultado;
+    }
 
     public HashMap<Nodo, ArrayList<Vecinos>> getVecinos() {
         return this.vecinos;

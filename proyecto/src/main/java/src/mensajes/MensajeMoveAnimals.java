@@ -7,24 +7,24 @@ import java.util.List;
 // El servidor calcula la ruta con Mapa.getRuta().
 public class MensajeMoveAnimals extends MensajeJugador {
     private List<int[]> animales;
-    private int idNodoDestino;
+    private int[] idNodo; // {idZona, idNodo}
 
     // Constructor para Jackson
     protected MensajeMoveAnimals() {
         super(TipoMensaje.MOVE_ANIMALS, null);
     }
 
-    public MensajeMoveAnimals(String nombre, List<int[]> animales, int idNodoDestino) {
+    public MensajeMoveAnimals(String nombre, List<int[]> animales, int[] idNodo) {
         super(TipoMensaje.MOVE_ANIMALS, nombre);
         this.animales = animales;
-        this.idNodoDestino = idNodoDestino;
+        this.idNodo = idNodo;
     }
 
     public List<int[]> getAnimales() {
         return animales;
     }
 
-    public int getIdNodoDestino() {
-        return idNodoDestino;
+    public int[] getidNodo() {
+        return idNodo;
     }
 }
