@@ -1,20 +1,71 @@
 package src.logica;
 
-public class Jugador {
+import java.util.Objects;
+import src.mapa.Zona;
 
-    private final int id;
+public class Jugador extends Pack {
+
     private final String nickname;
+    private Zona zonaElegida;
+    private int cafesConsumidos;
+    private int botsEliminados;
+    private boolean conectado;
 
     public Jugador(int id, String nickname) {
-        this.id = id;
-        this.nickname = nickname;
+        this(id, nickname, 0);
     }
 
-    public int getId() {
-        return id;
+    public Jugador(int id, String nickname, int damage) {
+        super(id, TipoEspecie.NINGUNA, damage);
+        this.nickname = Objects.requireNonNull(nickname, "El nickname es obligatorio.");
+        this.conectado = true;
     }
 
     public String getNickname() {
         return nickname;
+    }
+
+    public void elegirZona(Zona zona) {
+        this.zonaElegida = Objects.requireNonNull(zona, "La zona elegida es obligatoria.");
+    }
+
+    public Zona getZonaElegida() {
+        return zonaElegida;
+    }
+
+    public void elegirEspecie(TipoEspecie especie) {
+        if (especie == TipoEspecie.NINGUNA) {
+            throw new IllegalArgumentException("Debe elegirse una especie concreta.");
+        }
+        setEspecie(especie);
+    }
+
+    public synchronized void sumarCafe() {
+        cafesConsumidos++;
+    }
+
+    public synchronized int getCafesConsumidos() {
+        return cafesConsumidos;
+    }
+
+    public synchronized void sumarBotEliminado() {
+        botsEliminados++;
+    }
+
+    public synchronized int getBotsEliminados() {
+        return botsEliminados;
+    }
+
+    public boolean isConectado() {
+        return conectado;
+    }
+
+    public void setConectado(boolean conectado) {
+        this.conectado = conectado;
+    }
+
+    @Override
+    public int atacar(int[] idEnemigo) {
+        return -1;
     }
 }

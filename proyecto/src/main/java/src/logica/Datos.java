@@ -1,6 +1,8 @@
 package src.logica;
-import src.mapa.Zona;
+
 import java.util.List;
+import src.enviables.DatosEnviar;
+import src.mapa.Zona;
 
 public class Datos {
 
@@ -20,10 +22,28 @@ public class Datos {
         this.eventos = List.copyOf(eventos);
     }
 
-    public Jugador getJugadorA() { return jugadorA; }
-    public Jugador getJugadorB() { return jugadorB; }
-    public List<Entidad> getEntidadesDisponibles() { return entidadesDisponibles; } // colección de entidades
-    public Zona getZonaActual() { return zonaActual; }
-    public List<Evento> getEventos() { return eventos; }
+    public Jugador getJugadorA() {
+        return jugadorA;
+    }
+
+    public Jugador getJugadorB() {
+        return jugadorB;
+    }
+
+    public List<Entidad> getEntidadesDisponibles() {
+        return entidadesDisponibles;
+    }
+
+    public Zona getZonaActual() {
+        return zonaActual;
+    }
+
+    public List<Evento> getEventos() {
+        return eventos;
+    }
+
+    public DatosEnviar getEnviable() {
+        return DatosEnviar.desde(this);
+    }
 
 }
