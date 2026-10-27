@@ -11,7 +11,7 @@ public class ListenerArchivo implements LogListener {
     private final BufferedWriter escritor;
 
     public ListenerArchivo() throws IOException {
-        Path archivo = Path.of(Constantes.RUTA_ARCHIVO);
+        Path archivo = Constantes.RUTA_ARCHIVO;
         if (archivo.getParent() != null) {
             Files.createDirectories(archivo.getParent());
         }

@@ -1,5 +1,7 @@
 package src.utilidades;
 import java.awt.Color;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public final class Constantes {
 
@@ -37,7 +39,7 @@ public final class Constantes {
     public static final long MS_ESPERA_MAXIMA_COLA = 100;
     public static final long MS_ANTES_DE_MORRIR = 2000;
     public static final String NOMBRE_THREAD_LOGGER = "logger";
-    public static final String RUTA_ARCHIVO = "Log.log";
+    public static final Path RUTA_ARCHIVO = Paths.get("logs", "Log.log");
     public static final String ORIGEN_SERVER = "Servidor";
 
 
