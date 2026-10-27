@@ -1,53 +1,77 @@
 package src.enviables;
 
 import java.util.List;
-import src.logica.*;
-import src.mapa.*;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import src.logica.Animal;
+import src.logica.Jugador;
+import src.logica.TipoEspecie;
+import src.mapa.Zona;
 
 public class JugadorEnviar {
 
-    private int id;
-    private String nickname;
-    private TipoEspecie especie;
-    private List<AnimalEnviar> animales;
-    private int cafesConsumidos;
-    private int botsEliminados;
-    private boolean conectado;
+    private final int id;
+    private final String nickname;
+    private final TipoEspecie especie;
+    private final List<AnimalEnviar> animales;
+    private final int cafesConsumidos;
+    private final int botsEliminados;
+    private final boolean conectado;
 
     public JugadorEnviar(int id, String nickname, TipoEspecie especie,
                          List<AnimalEnviar> animales, int cafesConsumidos,
                          int botsEliminados, boolean conectado) {
+        this.id = id;
+        this.nickname = Objects.requireNonNull(nickname, "El nickname es obligatorio.");
+        this.especie = Objects.requireNonNull(especie, "La especie es obligatoria.");
+        this.animales = List.copyOf(animales);
+        this.cafesConsumidos = cafesConsumidos;
+        this.botsEliminados = botsEliminados;
+        this.conectado = conectado;
     }
 
     public int getId() {
-        return 0;
+        return id;
     }
 
     public String getNickname() {
-        return null;
+        return nickname;
     }
 
     public TipoEspecie getEspecie() {
-        return null;
+        return especie;
     }
 
     public List<AnimalEnviar> getAnimales() {
-        return null;
+        return animales;
     }
 
     public int getCafesConsumidos() {
-        return 0;
+        return cafesConsumidos;
     }
 
     public int getBotsEliminados() {
-        return 0;
+        return botsEliminados;
     }
 
     public boolean isConectado() {
-        return false;
+        return conectado;
     }
 
     public static JugadorEnviar desde(Jugador jugador, Zona zonaVisible) {
-        return null;
+        Objects.requireNonNull(jugador, "El jugador es obligatorio.");
+        List<AnimalEnviar> animalesVisibles = jugador.getLista().stream()
+                .filter(animal -> zonaVisible != null && animal.getZonaActual() == zonaVisible)
+                .map(AnimalEnviar::desde)
+                .collect(Collectors.toList());
+
+        return new JugadorEnviar(
+                jugador.getId(),
+                jugador.getNickname(),
+                jugador.getEspecie().getTipo(),
+                animalesVisibles,
+                jugador.getCafesConsumidos(),
+                jugador.getBotsEliminados(),
+                jugador.isConectado());
     }
 }

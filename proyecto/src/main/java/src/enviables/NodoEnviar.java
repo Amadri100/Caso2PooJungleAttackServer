@@ -1,29 +1,39 @@
 package src.enviables;
-import src.logica.*;
-import src.mapa.*;
-import src.utilidades.*;
+
+import java.util.Objects;
+import src.mapa.Nodo;
+import src.utilidades.Punto;
+
 public class NodoEnviar {
 
-    private int id;
-    private Punto posicion;
-    private int idZona;
+    private final int id;
+    private final Punto posicion;
+    private final int idZona;
 
     public NodoEnviar(int id, Punto posicion, int idZona) {
+        this.id = id;
+        Punto punto = Objects.requireNonNull(posicion, "La posición del nodo es obligatoria.");
+        this.posicion = new Punto(punto.getX(), punto.getY());
+        this.idZona = idZona;
     }
 
     public static NodoEnviar desde(Nodo nodo) {
-        return null;
+        Objects.requireNonNull(nodo, "El nodo es obligatorio.");
+        if (nodo.getZona() == null) {
+            throw new IllegalStateException("El nodo debe pertenecer a una zona para enviarse.");
+        }
+        return new NodoEnviar(nodo.getId(), nodo.getPosicion(), nodo.getZona().getId());
     }
 
     public int getId() {
-        return 0;
+        return id;
     }
 
     public Punto getPosicion() {
-        return null;
+        return new Punto(posicion.getX(), posicion.getY());
     }
 
     public int getIdZona() {
-        return 0;
+        return idZona;
     }
 }
