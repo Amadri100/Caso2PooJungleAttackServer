@@ -13,14 +13,14 @@ public abstract class Pack {
 
     private final int id;
     private final List<Animal> animales = new ArrayList<>();
-    private Especie especie;
+    private TipoEspecie especie;
     private final int damage;
     private int conteoDeBajas = 0;
     private int conteoMuertes = 0;
 
     protected Pack(int id, TipoEspecie tipoEspecie, int damage) {
         this.id = id;
-        this.especie = new Especie(Objects.requireNonNull(tipoEspecie, "La especie es obligatoria."));
+        this.especie = tipoEspecie;
         this.damage = damage;
     }
 
@@ -28,12 +28,12 @@ public abstract class Pack {
         return id;
     }
 
-    public Especie getEspecie() {
+    public TipoEspecie getEspecie() {
         return especie;
     }
 
     protected void setEspecie(TipoEspecie tipoEspecie) {
-        this.especie = new Especie(Objects.requireNonNull(tipoEspecie, "La especie es obligatoria."));
+        this.especie = tipoEspecie;
     }
 
     public int getDamage() {

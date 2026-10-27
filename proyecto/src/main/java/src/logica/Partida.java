@@ -38,6 +38,8 @@ public class Partida implements Runnable {
     private ExecutorService ejecutor;
     private ConcurrentLinkedQueue<Evento> eventosPendientes;
     private Notificador notificador;
+    private Long tiempoInicio = null;
+    private Long tiempoFinal = null;
     private long inicio;
     private String ganador;
 
@@ -177,6 +179,7 @@ public class Partida implements Runnable {
             ejecutor.execute(hilo);
         }
         ejecutor.execute(this);
+        this.tiempoInicio = System.nanoTime();
         return true;
     }
 
@@ -301,43 +304,58 @@ public class Partida implements Runnable {
         notificador.enviarFin(this.ganador);
         ejecutor.shutdown();
         controlador.finalizarPartida(codigo);
+        this.tiempoFinal = System.nanoTime();
         return true;
     }
 
- public synchronized ResumenPartida getResumen() {
-        ArrayList<ResumenJugador> resumenJugadores = new ArrayList<>();
-        for (ThreadJugador hilo : jugadores) {
-            resumenJugadores.add(resumirJugador(hilo.getAnimal()));
-        }
-
+    public synchronized int[] getBotsVivosTotales() {
+        int[] datos = new int[2];
         int botsVivos = 0; //Packs de bots vivos
         for (ThreadBot hilo : bots) {
             if (hilo.getBot().getVivos() > 0) { 
                 botsVivos++;
             }
         }
-
+        datos[0] = botsVivos;
+        datos[1] = this.bots.size();
+        return datos;
+    }
+ 
+    public synchronized int getCafesRestantes() {
         int cafesRestantes = 0;
         for (Cafe cafe : cafes) {
             if (cafe.estaDisponible()) {
                 cafesRestantes++;
             }
         }
-
-        return new ResumenPartida(codigo, estado, resumenJugadores, botsVivos, bots.size(),
-                cafesRestantes, System.currentTimeMillis(), ganador);
+        return cafesRestantes;
     }
 
-    private ResumenJugador resumirJugador(Jugador jugador) {
-        ResumenJugador resumen = new ResumenJugador();
-        resumen.setEspecie(jugador.getEspecie());
-        resumen.setDamage(jugador.getDamage());
-        resumen.setConteoDeBajas(jugador.getConteoDeBajas());
-        resumen.setTotalVivos(jugador.getVivos());
-        resumen.setZonaElegida(filtrarZona(jugador));
-        resumen.setCafesConsumidos(jugador.getCafesConsumidos());
-        resumen.setBotsEliminados(jugador.getBotsEliminados());
-        return resumen;
+    public synchronized long tiempoTranscurrido() {
+        long resultado = 0;
+        if (this.tiempoInicio != null) {
+            //Termino
+            if (this.tiempoFinal != null) { 
+                resultado = this.tiempoFinal - this.tiempoInicio;
+            }
+            //No ha terminado
+            else {
+                resultado = System.nanoTime() - this.tiempoInicio;
+            }
+        }
+        return  resultado / 1000000; //Nanosegundo -> milisegundos
+    }
+
+    public String getGanador() {
+        return this.ganador;
+    }
+
+    public ArrayList<ResumenJugador> resumirJugadores() {
+        ArrayList<ResumenJugador> resumenes = new ArrayList<>();
+        for (ThreadJugador jugadores : jugadores) {
+            resumenes.add(new ResumenJugador(jugadores.getAnimal()));
+        }
+        return resumenes;
     }
 
 

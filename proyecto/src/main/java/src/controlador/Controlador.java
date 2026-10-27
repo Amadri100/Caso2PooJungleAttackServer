@@ -158,7 +158,7 @@ public class Controlador {
 
     public List<ResumenPartida> getResumenesPartidas() {
         return partidas.values().stream() //Obtiene todas las partidas
-                .map(Partida::getResumen) //Obtiene los resumenes
+                .map(ResumenPartida::crearResumenSafe) //Crea cada resumen
                 .filter(Objects::nonNull) //Eimina los que son null
                 .collect(Collectors.toList()); //Covinerte a lista
     }

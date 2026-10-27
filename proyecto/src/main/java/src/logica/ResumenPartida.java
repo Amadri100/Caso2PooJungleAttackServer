@@ -13,17 +13,24 @@ public class ResumenPartida {
     private final long duracionMs;
     private final String ganador;
 
-    public ResumenPartida(String codigo, EstadoPartida estado, List<ResumenJugador> jugadores,
-                          int botsVivos, int botsTotales, int cafesRestantes,
-                          long duracionMs, String ganador) {
-        this.codigo = codigo;
-        this.estado = estado;
-        this.jugadores = jugadores;
-        this.botsVivos = botsVivos;
-        this.botsTotales = botsTotales;
-        this.cafesRestantes = cafesRestantes;
-        this.duracionMs = duracionMs;
-        this.ganador = ganador;
+    public static ResumenPartida crearResumenSafe(Partida partida) {
+        ResumenPartida resumen = null;
+        if (partida != null) {
+            resumen = new ResumenPartida(partida);
+        }
+        return  resumen;
+    } 
+
+    public ResumenPartida(Partida partida) {
+        this.codigo = partida.getCodigo();
+        this.estado = partida.getEstado();
+        int[] vivoYTotales = partida.getBotsVivosTotales();
+        this.jugadores = partida.resumirJugadores();
+        this.botsVivos = vivoYTotales[0];
+        this.botsTotales = vivoYTotales[1];
+        this.cafesRestantes = partida.getCafesRestantes();
+        this.duracionMs = partida.tiempoTranscurrido();
+        this.ganador = partida.getGanador();
     }
 
     public String getCodigo() {

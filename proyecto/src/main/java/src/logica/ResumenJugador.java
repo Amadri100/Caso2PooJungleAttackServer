@@ -4,7 +4,7 @@ import src.mapa.Zona;
 
 public class ResumenJugador {
 
-    private Especie especie;
+    private TipoEspecie especie;
     private int damage;
     private int conteoDeBajas;
     private Zona zonaElegida;
@@ -12,13 +12,22 @@ public class ResumenJugador {
     private int botsEliminados;
     private int totalVivos;
 
-    public ResumenJugador() {}
+    public ResumenJugador(Jugador jugador) {
+        this.especie = jugador.getEspecie();
+        this.damage = jugador.getDamage();
+        this.conteoDeBajas = jugador.getConteoDeBajas();
+        this.zonaElegida = jugador.getZonaElegida();
+        this.cafesConsumidos = jugador.getCafesConsumidos();
+        this.botsEliminados = jugador.getBotsEliminados();
+        this.totalVivos = jugador.getVivos();
 
-    public Especie getEspecie() {
+    }
+
+    public TipoEspecie getEspecie() {
         return especie;
     }
 
-    public void setEspecie(Especie especie) {
+    public void setEspecie(TipoEspecie especie) {
         this.especie = especie;
     }
 

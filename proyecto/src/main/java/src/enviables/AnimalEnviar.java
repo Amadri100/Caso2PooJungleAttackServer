@@ -30,7 +30,7 @@ public class AnimalEnviar extends EntidadEnviar {
                 animal.getId(),
                 PosicionEnviar.desde(animal.getPosicion()),
                 pack.getId(),
-                pack.getEspecie().getTipo(),
+                pack.getEspecie(),
                 animal.getEnergia());
     }
 

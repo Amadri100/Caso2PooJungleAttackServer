@@ -47,7 +47,7 @@ public class Jugador extends Pack {
     }
 
     public void crearAnimales(Nodo nodoInicial) {
-        if (getEspecie().getTipo() == TipoEspecie.NINGUNA) {
+        if (getEspecie() == TipoEspecie.NINGUNA) {
             throw new IllegalStateException("Debe seleccionar una especie antes de crear animales.");
         }
         crearAnimales(nodoInicial, Constantes.PLAYER_PACK_SIZE, Constantes.PLAYER_INITIAL_ENERGY);
