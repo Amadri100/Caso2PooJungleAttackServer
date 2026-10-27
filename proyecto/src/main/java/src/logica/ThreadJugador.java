@@ -17,6 +17,10 @@ public class ThreadJugador extends ThreadAnimal {
     @Override
     public void run() {}
 
+    public Jugador getAnimal() {
+        return this.animal;
+    }
+
     public void setObjetivo(Animal objetivo) {}
 
     @Override

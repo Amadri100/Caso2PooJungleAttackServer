@@ -45,6 +45,11 @@ public final class Constantes {
 
     public static final String ERROR_EN_LOGGER = "ERROR interno en el logger";
 
+    public static final String ERROR_CREAR = "No se pudo crear la partida";
+    public static final String ERROR_ESPECIE = "Debes indicar una especie";
+    public static final String ERROR_SIN_PARTIDA = "No estás en una partida";
+    public static final String ERROR_ANIMALES = "El atacante y el enemigo deben ser animales válidos";
+    public static final String ERROR_UNIRSE = "No se pudo unir a la partida";
     public static final String ERROR_NOMBRE_NO_DISPONIBLE = "El nombre ya esta reservado";
     public static final String NO_HAY_ERROR = "NO ERROR";
     public static final String ERROR_INICIO_SERVER = "No se pudo inicializar el serverSocket, razon: ";

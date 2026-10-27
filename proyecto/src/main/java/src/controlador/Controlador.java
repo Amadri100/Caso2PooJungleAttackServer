@@ -32,6 +32,12 @@ public class Controlador {
         this.partidaDeJugador = new ConcurrentHashMap<>();
         this.ejecutor = Executors.newCachedThreadPool();
         this.ejecutorMensajes = new EjecutorMensajes(this);
+        ejecutorMensajes.registrar(new ManejadorCreateMatch());
+        ejecutorMensajes.registrar(new ManejadorJoinMatch());
+        ejecutorMensajes.registrar(new ManejadorSelectAnimal());
+        ejecutorMensajes.registrar(new ManejadorMoveAnimals());
+        ejecutorMensajes.registrar(new ManejadorAttack());
+        ejecutorMensajes.registrar(new ManejadorViewZone());
     }
 
     // Temporal,

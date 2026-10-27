@@ -76,6 +76,14 @@ public class Partida implements Runnable {
     public void notificar(ArrayList<DatosEnviar> datos) {
     }
 
+
+    public List<String> getNombresJugadores() {
+        ArrayList<String> nombres = new ArrayList<>();
+        for (ThreadJugador jugador : jugadores) {
+            nombres.add(jugador.getAnimal().getNickname());
+        }
+        return nombres;
+    }
     public boolean finalizar(Jugador ganador) {
         return false;
     }
