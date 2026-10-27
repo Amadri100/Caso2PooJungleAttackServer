@@ -28,7 +28,7 @@ public class ManejadorMoveAnimals implements ManejadorMensaje {
             controlador.enviar(nombre, new MensajeCaso(Constantes.ERROR_ANIMALES));
             return;
         }
-        partida.moverAnimales(nombre, mensaje.getAnimales(), mensaje.getIdNodoDestino());
+        partida.moverAnimales(nombre, mensaje.getAnimales(), mensaje.getidNodo());
     }
 
     // Cada animal debe venir como int[]{idPack, idAnimal}

@@ -40,6 +40,11 @@ public final class Constantes {
     public static final long INTERVALO_ACTUALIZACION_MS = 100;
     public static final String ORIGEN_PARTIDA = "Partida";
 
+    public static final int CANTIDAD_BOTS_PARTIDA = 4;
+    public static final int CANTIDAD_CAFES_PARTIDA = 10;
+    public static final java.awt.Color[] COLORES_BANDERAS = { java.awt.Color.RED, java.awt.Color.BLUE };
+    public static final String ERROR_PARTIDA_ZONAS_INSUFICIENTES = "El mapa no tiene suficientes zonas para los jugadores de la partida";
+
 
     public static final String ERROR_PARTIDA_ESTADO_INVALIDO = "La partida no está en el estado necesario para esa acción";
     public static final String ERROR_PARTIDA_JUGADOR_NO_ENCONTRADO = "No perteneces a esta partida";

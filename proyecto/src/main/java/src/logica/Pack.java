@@ -3,6 +3,8 @@ package src.logica;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import src.mapa.Posicion;
 import src.mapa.Zona;
 
 public abstract class Pack {
@@ -11,7 +13,8 @@ public abstract class Pack {
     private final List<Animal> animales = new ArrayList<>();
     private Especie especie;
     private final int damage;
-    private int conteoDeBajas;
+    private int conteoDeBajas = 0;
+    private int conteoMuertes = 0;
 
     protected Pack(int id, TipoEspecie tipoEspecie, int damage) {
         this.id = id;
@@ -82,4 +85,12 @@ public abstract class Pack {
     }
 
     public abstract int atacar(int[] idEnemigo);
+
+    public List<Posicion> getPosiciones() {
+        ArrayList<Posicion> posiciones = new ArrayList<>();
+        for (Animal animal : animales) {
+            posiciones.add(animal.getPosicion());
+        }
+        return posiciones;
+    }
 }

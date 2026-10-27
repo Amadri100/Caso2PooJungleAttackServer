@@ -24,5 +24,8 @@ public class ThreadBot implements Runnable {
     private boolean intentarAtacar() {
         return false;
     }
+    public Bot getBot() {
+        return this.bot;
+    }
 
 }

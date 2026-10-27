@@ -1,6 +1,7 @@
 package src.logica;
 
 import src.mapa.Ruta;
+import src.utilidades.Constantes;
 
 public class Bot extends Pack {
 
@@ -8,8 +9,8 @@ public class Bot extends Pack {
     private Ruta rutaActual;
     private int movimientosEnRuta;
 
-    public Bot(int id, TipoEspecie tipoEspecie, int damage) {
-        super(id, tipoEspecie, damage);
+    public Bot(int id, TipoEspecie tipoEspecie) {
+        super(id, tipoEspecie, Constantes.BOT_DAMAGE);
     }
 
     public EstrategiaBot getEstrategia() {

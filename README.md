@@ -658,6 +658,15 @@ tanto eso es el int[]
 + getDuracionMs() : long
 + getGanador() : String
 
+#### ResumenJugador
+- especie : Especie
+- damage : int
+- conteoDeBajas : int- 
+- zonaElegida : Zona
+- cafesConsumidos : int
+- botsEliminados : int
+- totalVivos : int
+
 #### Notificador
 - partida : Partida
 + Notificador(partida : Partida)
@@ -770,6 +779,7 @@ de movimientos
 + getVivos() : int
 + getEnergiaTotal() : int
 + agregarBotEliminado() : void
+
 
 
 // si atacar() devuelve -1 significa que no se ejecuto
