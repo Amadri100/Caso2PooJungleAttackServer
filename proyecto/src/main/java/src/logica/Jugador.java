@@ -1,7 +1,9 @@
 package src.logica;
 
 import java.util.Objects;
+import java.util.List;
 import src.mapa.Nodo;
+import src.mapa.Posicion;
 import src.mapa.Zona;
 import src.utilidades.Constantes;
 
@@ -47,10 +49,15 @@ public class Jugador extends Pack {
     }
 
     public void crearAnimales(Nodo nodoInicial) {
-        if (getEspecie() == TipoEspecie.NINGUNA) {
-            throw new IllegalStateException("Debe seleccionar una especie antes de crear animales.");
-        }
         crearAnimales(nodoInicial, Constantes.PLAYER_PACK_SIZE, Constantes.PLAYER_INITIAL_ENERGY);
+    }
+
+    public void crearAnimales(List<Posicion> posiciones) {
+        crearAnimales(posiciones, Constantes.PLAYER_INITIAL_ENERGY);
+    }
+
+    public void crearAnimales(List<Posicion> posiciones, int energiaInicial) {
+        super.crearAnimales(posiciones, energiaInicial);
     }
 
     public Jugador copiaBasica() { //Copia con los datos basicos
