@@ -68,7 +68,7 @@ public class JugadorEnviar {
         return new JugadorEnviar(
                 jugador.getId(),
                 jugador.getNickname(),
-                jugador.getEspecie().getTipo(),
+                jugador.getEspecie(),
                 animalesVisibles,
                 jugador.getCafesConsumidos(),
                 jugador.getBotsEliminados(),

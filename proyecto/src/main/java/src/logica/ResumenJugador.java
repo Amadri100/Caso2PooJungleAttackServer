@@ -4,7 +4,7 @@ import src.mapa.Zona;
 
 public class ResumenJugador {
 
-    private Especie especie;
+    private TipoEspecie especie;
     private int damage;
     private int conteoDeBajas;
     private Zona zonaElegida;
@@ -14,11 +14,11 @@ public class ResumenJugador {
 
     public ResumenJugador() {}
 
-    public Especie getEspecie() {
+    public TipoEspecie getEspecie() {
         return especie;
     }
 
-    public void setEspecie(Especie especie) {
+    public void setEspecie(TipoEspecie especie) {
         this.especie = especie;
     }
 

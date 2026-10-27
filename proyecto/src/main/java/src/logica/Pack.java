@@ -13,14 +13,14 @@ public abstract class Pack {
 
     private final int id;
     private final List<Animal> animales = new ArrayList<>();
-    private Especie especie;
+    private TipoEspecie especie;
     private final int damage;
     private int conteoDeBajas = 0;
     private int conteoMuertes = 0;
 
     protected Pack(int id, TipoEspecie tipoEspecie, int damage) {
         this.id = id;
-        this.especie = new Especie(Objects.requireNonNull(tipoEspecie, "La especie es obligatoria."));
+        this.especie = Objects.requireNonNull(tipoEspecie, "La especie es obligatoria.");
         this.damage = damage;
     }
 
@@ -28,12 +28,12 @@ public abstract class Pack {
         return id;
     }
 
-    public Especie getEspecie() {
+    public TipoEspecie getEspecie() {
         return especie;
     }
 
     protected void setEspecie(TipoEspecie tipoEspecie) {
-        this.especie = new Especie(Objects.requireNonNull(tipoEspecie, "La especie es obligatoria."));
+        this.especie = Objects.requireNonNull(tipoEspecie, "La especie es obligatoria.");
     }
 
     public int getDamage() {
@@ -103,12 +103,46 @@ public abstract class Pack {
         }
 
         Punto punto = Objects.requireNonNull(nodoInicial.getPosicion(), "El nodo debe tener posición.");
+        ArrayList<Posicion> posiciones = new ArrayList<>(cantidad);
         for (int idAnimal = 0; idAnimal < cantidad; idAnimal++) {
-            Posicion posicion = new Posicion(
+            posiciones.add(new Posicion(
                     nodoInicial,
-                    new Punto(punto.getX(), punto.getY()));
-            agregarAnimal(new AnimalPack(idAnimal, posicion, energiaInicial));
+                    new Punto(punto.getX(), punto.getY())));
         }
+        crearAnimales(posiciones, energiaInicial);
+    }
+
+    protected synchronized void crearAnimales(List<Posicion> posiciones, int energiaInicial) {
+        Objects.requireNonNull(posiciones, "La lista de posiciones es obligatoria.");
+        if (especie == TipoEspecie.NINGUNA) {
+            throw new IllegalStateException("Debe seleccionarse una especie antes de crear animales.");
+        }
+        if (energiaInicial < 0) {
+            throw new IllegalArgumentException("La energía inicial no puede ser negativa.");
+        }
+        if (!animales.isEmpty()) {
+            throw new IllegalStateException("Los animales de este pack ya fueron creados.");
+        }
+        for (Posicion posicion : posiciones) {
+            Objects.requireNonNull(posicion, "Las posiciones no pueden contener null.");
+            Objects.requireNonNull(posicion.getPunto(), "Cada posición debe contener un punto.");
+        }
+
+        for (int idAnimal = 0; idAnimal < posiciones.size(); idAnimal++) {
+            agregarAnimal(new AnimalPack(idAnimal, posiciones.get(idAnimal), energiaInicial));
+        }
+    }
+
+    protected synchronized void agregarAnimal(int idAnimal, Posicion posicion, int energiaInicial) {
+        Objects.requireNonNull(posicion, "La posición del animal es obligatoria.");
+        Objects.requireNonNull(posicion.getPunto(), "La posición del animal debe tener un punto.");
+        if (idAnimal < 0 || energiaInicial < 0) {
+            throw new IllegalArgumentException("El id y la energía del animal no pueden ser negativos.");
+        }
+        if (especie == TipoEspecie.NINGUNA) {
+            throw new IllegalStateException("Debe seleccionarse una especie antes de agregar animales.");
+        }
+        agregarAnimal(new AnimalPack(idAnimal, posicion, energiaInicial));
     }
 
     private static final class AnimalPack extends Animal {
