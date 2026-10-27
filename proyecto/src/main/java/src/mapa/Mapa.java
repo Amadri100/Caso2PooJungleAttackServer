@@ -1,23 +1,27 @@
 package src.mapa;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
+import src.utilidades.Constantes;
 
 public class Mapa {
     private static volatile Mapa instance = null;
     private ArrayList<Zona> zonas;
     private HashMap<Nodo, ArrayList<Vecinos>> vecinos;
+
     private Mapa() {
+        this.zonas = new ArrayList<>();
+        this.vecinos = new HashMap<>();
         crearZonas();
-        crearNodos();
-        crearVecinos();
-        crearMapaVecinos();
     }
-    private void crearZonas() {}
-    private void crearNodos() {}
-    private void crearVecinos() {}
-    private void crearMapaVecinos() {}
+
+    private void crearZonas() {
+        for (int idZona = 0; idZona < Constantes.TOTAL_ZONES; idZona++) {
+            zonas.add(new Zona(idZona, this));
+        }
+    }
 
     public static Mapa getInstance() {
         if (instance == null) {
@@ -34,6 +38,11 @@ public class Mapa {
     }
     
     public Ruta getRuta(Nodo origen, Nodo destino) {
+        if (origen == null || destino == null
+                || !vecinos.containsKey(origen)
+                || !vecinos.containsKey(destino)) {
+            return null;
+        }
 
         //Algoritmo Dijkstra
 
@@ -86,14 +95,16 @@ public class Mapa {
     }
 
     public Nodo getNodo(int[] idNodo) {
-        Nodo resultado = null;
-        if (this.zonas.size() > idNodo[0]) {
-            Zona zonaTemp = this.zonas.get(idNodo[0]);
-            if (zonaTemp.getNodos().size() > idNodo[1]) {
-                resultado = zonaTemp.getNodos().get(idNodo[1]);
-            }
+        if (idNodo == null || idNodo.length < 2
+                || idNodo[0] < 0 || idNodo[1] < 0
+                || idNodo[0] >= zonas.size()) {
+            return null;
         }
-        return resultado;
+        Zona zona = zonas.get(idNodo[0]);
+        if (idNodo[1] >= zona.getNodos().size()) {
+            return null;
+        }
+        return zona.getNodos().get(idNodo[1]);
     }
 
     public HashMap<Nodo, ArrayList<Vecinos>> getVecinos() {
@@ -102,10 +113,11 @@ public class Mapa {
 
     public ArrayList<Vecinos> getVecinosDe(Nodo nodo) {
         ArrayList<Vecinos> lista = this.vecinos.get(nodo);
-        return lista;
+        return lista == null ? new ArrayList<>() : new ArrayList<>(lista);
     }
+
     public double getPeso(Nodo a, Nodo b) {
-        for (Vecinos v : this.getVecinosDe(a)) {
+        for (Vecinos v : getVecinosDe(a)) {
             if (v.formaParte(b)) {
                 return v.getPeso();
             }

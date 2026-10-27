@@ -61,7 +61,10 @@ public class Jugador extends Pack {
     }
 
     public Jugador copiaBasica() { //Copia con los datos basicos
-        return new Jugador(this.getId(), this.getNickname()); 
+        Jugador copia = new Jugador(getId(), getNickname());
+        copia.setEspecie(getEspecie());
+        copia.setConectado(isConectado());
+        return copia;
     }
 
     public synchronized void sumarCafe() {

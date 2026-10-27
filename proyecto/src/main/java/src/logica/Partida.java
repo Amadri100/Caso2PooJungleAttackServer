@@ -1,8 +1,6 @@
 package src.logica;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +22,7 @@ import src.utilidades.Constantes;
 import src.utilidades.GeneradorAleatorio;
 import src.utilidades.Logger;
 import src.utilidades.NivelLog;
+import src.utilidades.Punto;
 
 public class Partida implements Runnable {
 
@@ -40,7 +39,6 @@ public class Partida implements Runnable {
     private Notificador notificador;
     private Long tiempoInicio = null;
     private Long tiempoFinal = null;
-    private long inicio;
     private String ganador;
 
     // Especie elegida por cada jugador durante la fase de selección (nickname -> especie)
@@ -91,20 +89,25 @@ public class Partida implements Runnable {
     }
 
     private ArrayList<int[]> generarPosicionesAleatorias(int cantidadNum) {
+        if (cantidadNum < 0) {
+            throw new IllegalArgumentException("La cantidad de ubicaciones no puede ser negativa.");
+        }
         ArrayList<int[]> posiciones = new ArrayList<>();
         Mapa mapa = Mapa.getInstance();
-        int totalZonas = mapa.getZonas().size();
-        GeneradorAleatorio generador = GeneradorAleatorio.getInstance();
-        ArrayList<Integer> indicesZonas = new ArrayList<>(); 
-        for (int i = 0; i < totalZonas; i++) {
-            indicesZonas.add(i);
+        List<Zona> zonas = mapa.getZonas();
+        ArrayList<Integer> zonasConNodos = obtenerZonasConNodos(zonas);
+        if (cantidadNum == 0 || zonasConNodos.isEmpty()) {
+            return posiciones;
         }
-        generador.mezclar(indicesZonas);
-        // Se asignan las zonas
+
+        GeneradorAleatorio generador = GeneradorAleatorio.getInstance();
+        generador.mezclar(zonasConNodos);
         for (int i = 0; i < cantidadNum; i++) {
-            int indiceZona = indicesZonas.get(i);
-            Zona nodos = mapa.getZonas().get(indiceZona);
-            int indiceNodo = generador.nextInt(nodos.getNodos().size());
+            int indiceZona = i < zonasConNodos.size()
+                    ? zonasConNodos.get(i)
+                    : zonasConNodos.get(generador.nextInt(zonasConNodos.size()));
+            List<Nodo> nodos = zonas.get(indiceZona).getNodos();
+            int indiceNodo = generador.nextInt(nodos.size());
             posiciones.add(new int[]{indiceZona, indiceNodo});
         }
         return posiciones;
@@ -114,12 +117,166 @@ public class Partida implements Runnable {
         return generarPosicionesAleatorias(Constantes.TOTAL_COFFEE_CUPS);
     }
 
-    private ArrayList<int[]> asignarZonaAnimales() {
-        return generarPosicionesAleatorias(Constantes.TOTAL_ANIMALES);
+    private ArrayList<int[]> asignarZonaAnimales(int cantidadPacks) {
+        return generarPosicionesAleatorias(cantidadPacks);
     }
 
-    private void incializarInstancias() {
+    private boolean inicializarInstancias() {
+        if (jugadores.size() != Constantes.MAX_JUGADORES_PARTIDA
+                || especiesElegidas.size() != jugadores.size()) {
+            registrarErrorInicio(Constantes.ERROR_PARTIDA_ESTADO_INVALIDO);
+            return false;
+        }
 
+        int cantidadBots = Constantes.TOTAL_BOTS;
+        int cantidadPacks = jugadores.size() + cantidadBots;
+        Mapa mapa = Mapa.getInstance();
+        List<Zona> zonas = mapa.getZonas();
+        if (obtenerZonasConNodos(zonas).size() < cantidadPacks) {
+            registrarErrorInicio(Constantes.ERROR_PARTIDA_ZONAS_INSUFICIENTES);
+            return false;
+        }
+
+        if (Constantes.COLORES_BANDERAS == null
+                || Constantes.COLORES_BANDERAS.length < jugadores.size()) {
+            registrarErrorInicio("No hay suficientes colores configurados para las banderas.");
+            return false;
+        }
+        if (!bots.isEmpty() || !cafes.isEmpty() || !banderas.isEmpty()) {
+            registrarErrorInicio("Las instancias de la partida ya fueron inicializadas.");
+            return false;
+        }
+
+        ArrayList<TipoEspecie> especiesBot = new ArrayList<>(List.of(TipoEspecie.values()));
+        especiesBot.remove(TipoEspecie.NINGUNA);
+        if (especiesBot.isEmpty()) {
+            registrarErrorInicio("No hay especies válidas configuradas para los bots.");
+            return false;
+        }
+
+        for (ThreadJugador hilo : jugadores) {
+            Jugador jugador = hilo.getAnimal();
+            TipoEspecie especie = especiesElegidas.get(jugador.getNickname());
+            if (especie == null || especie == TipoEspecie.NINGUNA) {
+                registrarErrorInicio(Constantes.ERROR_PARTIDA_ESPECIE_NO_DISPONIBLE);
+                return false;
+            }
+            if (!jugador.getLista().isEmpty()) {
+                registrarErrorInicio("Los animales de un jugador ya estaban inicializados.");
+                return false;
+            }
+        }
+
+        ArrayList<int[]> ubicacionesAnimales = asignarZonaAnimales(cantidadPacks);
+        ArrayList<int[]> ubicacionesCafes = asignarZonaObjetos();
+        if (ubicacionesAnimales.size() != cantidadPacks
+                || ubicacionesCafes.size() != Constantes.TOTAL_COFFEE_CUPS) {
+            registrarErrorInicio(Constantes.ERROR_PARTIDA_ZONAS_INSUFICIENTES);
+            return false;
+        }
+
+        ArrayList<Nodo> nodosIniciales = new ArrayList<>(cantidadPacks);
+        for (int[] ubicacion : ubicacionesAnimales) {
+            Nodo nodo = obtenerNodo(mapa, ubicacion);
+            if (nodo.getZona() == null) {
+                registrarErrorInicio("Cada nodo de inicio debe pertenecer a una zona.");
+                return false;
+            }
+            nodosIniciales.add(nodo);
+        }
+
+        ArrayList<Nodo> nodosCafes = new ArrayList<>(ubicacionesCafes.size());
+        for (int[] ubicacion : ubicacionesCafes) {
+            nodosCafes.add(obtenerNodo(mapa, ubicacion));
+        }
+
+        GeneradorAleatorio generador = GeneradorAleatorio.getInstance();
+        ArrayList<ThreadBot> nuevosBots = new ArrayList<>(cantidadBots);
+        for (int indiceBot = 0; indiceBot < cantidadBots; indiceBot++) {
+            TipoEspecie especie = especiesBot.get(generador.nextInt(especiesBot.size()));
+            Bot bot = new Bot(jugadores.size() + indiceBot, especie);
+            bot.crearAnimales(nodosIniciales.get(jugadores.size() + indiceBot));
+            nuevosBots.add(new ThreadBot(this, bot));
+        }
+
+        ArrayList<Bandera> nuevasBanderas = new ArrayList<>(jugadores.size());
+        for (int indiceJugador = 0; indiceJugador < jugadores.size(); indiceJugador++) {
+            Jugador jugador = jugadores.get(indiceJugador).getAnimal();
+            nuevasBanderas.add(new Bandera(
+                    jugador.getId(),
+                    crearPosicion(nodosIniciales.get(indiceJugador)),
+                    jugador,
+                    Constantes.COLORES_BANDERAS[indiceJugador]));
+        }
+
+        ArrayList<Cafe> nuevosCafes = new ArrayList<>(Constantes.TOTAL_COFFEE_CUPS);
+        for (int indiceCafe = 0; indiceCafe < nodosCafes.size(); indiceCafe++) {
+            nuevosCafes.add(new Cafe(indiceCafe, crearPosicion(nodosCafes.get(indiceCafe))));
+        }
+
+        for (int indiceJugador = 0; indiceJugador < jugadores.size(); indiceJugador++) {
+            Jugador jugador = jugadores.get(indiceJugador).getAnimal();
+            Nodo nodoInicial = nodosIniciales.get(indiceJugador);
+            jugador.elegirEspecie(especiesElegidas.get(jugador.getNickname()));
+            jugador.elegirZona(nodoInicial.getZona());
+            jugador.crearAnimales(nodoInicial);
+        }
+
+        bots.addAll(nuevosBots);
+        for (ThreadBot hiloBot : nuevosBots) {
+            manadas.add(hiloBot.getBot());
+        }
+        banderas.addAll(nuevasBanderas);
+        cafes.addAll(nuevosCafes);
+        return true;
+    }
+
+    private ArrayList<Integer> obtenerZonasConNodos(List<Zona> zonas) {
+        ArrayList<Integer> zonasConNodos = new ArrayList<>();
+        if (zonas == null) {
+            return zonasConNodos;
+        }
+        for (int indiceZona = 0; indiceZona < zonas.size(); indiceZona++) {
+            Zona zona = zonas.get(indiceZona);
+            if (zona == null) {
+                continue;
+            }
+            List<Nodo> nodos = zona.getNodos();
+            if (nodos.isEmpty()) {
+                continue;
+            }
+            boolean nodosValidos = true;
+            for (Nodo nodo : nodos) {
+                if (nodo == null || nodo.getPosicion() == null || nodo.getZona() == null) {
+                    nodosValidos = false;
+                    break;
+                }
+            }
+            if (nodosValidos) {
+                zonasConNodos.add(indiceZona);
+            }
+        }
+        return zonasConNodos;
+    }
+
+    private Nodo obtenerNodo(Mapa mapa, int[] ubicacion) {
+        Nodo nodo = mapa.getNodo(ubicacion);
+        if (nodo == null || nodo.getPosicion() == null) {
+            throw new IllegalStateException("La ubicación seleccionada no contiene un nodo válido.");
+        }
+        return nodo;
+    }
+
+    private Posicion crearPosicion(Nodo nodo) {
+        Punto punto = nodo.getPosicion();
+        return new Posicion(nodo, new Punto(punto.getX(), punto.getY()));
+    }
+
+    private void registrarErrorInicio(String detalle) {
+        Logger.getInstance().crearLog(NivelLog.ERROR, Constantes.ORIGEN_PARTIDA, detalle, null);
+        for (ThreadJugador hilo : jugadores) {
+            enviarError(hilo.getAnimal().getNickname(), detalle);
+        }
     }
 
 
@@ -163,13 +320,13 @@ public class Partida implements Runnable {
                 || especiesElegidas.size() < Constantes.MAX_JUGADORES_PARTIDA) {
             return false;
         }
+        if (!inicializarInstancias()) {
+            return false;
+        }
         estado = EstadoPartida.JUGANDO;
-        inicio = System.currentTimeMillis();
-
-        incializarInstancias();
-
         notificador = new Notificador(this);
         ejecutor = Executors.newCachedThreadPool();
+        tiempoInicio = System.nanoTime();
         enviarEstado(true);
 
         for (ThreadJugador hilo : jugadores) {
@@ -179,7 +336,6 @@ public class Partida implements Runnable {
             ejecutor.execute(hilo);
         }
         ejecutor.execute(this);
-        this.tiempoInicio = System.nanoTime();
         return true;
     }
 
@@ -197,12 +353,14 @@ public class Partida implements Runnable {
             enviarError(nombre, Constantes.ERROR_PARTIDA_ESPECIE_YA_ELEGIDA);
             return;
         }
-        if (especie == null || especiesElegidas.containsValue(especie)) {
+        if (especie == null || especie == TipoEspecie.NINGUNA
+                || especiesElegidas.containsValue(especie)) {
             enviarError(nombre, Constantes.ERROR_PARTIDA_ESPECIE_NO_DISPONIBLE);
             return;
         }
 
         especiesElegidas.put(nombre, especie);
+        buscarJugador(nombre).getAnimal().elegirEspecie(especie);
         enviar(nombre, new MensajeCaso(true, Constantes.NO_HAY_ERROR));
 
         // El oponente ve qué especie se eligió y cuáles quedan
@@ -374,36 +532,48 @@ public class Partida implements Runnable {
         //Itera entre todos y los filtra segun si son iguales a la zona
         for (ThreadJugador jugador : jugadores) {
             for (Animal animal : jugador.getAnimal().getLista()) {
-                if (animal.getPosicion().getNodo().getZona().equals(zona)) {
+                if (animal.getZonaActual() == zona) {
                     entidades.add(animal);
                 }
             }
         }
         for (ThreadBot bot : bots) {
             for (Animal animal : bot.getBot().getLista()) {
-                if (animal.getPosicion().getNodo().getZona().equals(zona)) {
+                if (animal.getZonaActual() == zona) {
                     entidades.add(animal);
                 }
             }
         }
         for (Cafe cafe : cafes) {
-            if (cafe.getPosicion().getNodo().getZona().equals(zona)) {
+            if (estaEnZona(cafe, zona)) {
                 entidades.add(cafe);
             }
         }
         for (Bandera bandera : banderas) {
-            if (bandera.getPosicion().getNodo().getZona().equals(zona)) {
+            if (estaEnZona(bandera, zona)) {
                 entidades.add(bandera);
             }
         }
         return entidades;
     }
+
+    private boolean estaEnZona(Entidad entidad, Zona zona) {
+        Posicion posicion = entidad.getPosicion();
+        return posicion != null
+                && posicion.getNodo() != null
+                && posicion.getNodo().getZona() == zona;
+    }
+
     private DatosEnviar obtenerDatos(Jugador jugador) {
         Zona zona = filtrarZona(jugador);
-        // AJUSTE: se asume Zona.getEntidades() : List<Entidad>
         List<Entidad> entidades = zona == null ? List.of() : obtenerEntidadesConZona(zona);
-        // AJUSTE: se asume el constructor Datos(Jugador a, Jugador b, Zona zona, List<Entidad> entidades, List<Evento> eventos)
-        Datos datos = new Datos(jugador, oponenteDe(jugador), entidades, zona, eventosDelTick);
+        Jugador oponente = oponenteDe(jugador);
+        Datos datos = new Datos(
+                jugador,
+                oponente == null ? null : oponente.copiaBasica(),
+                entidades,
+                zona,
+                eventosDelTick);
         return DatosEnviar.desde(datos);
     }
 
@@ -484,6 +654,7 @@ public class Partida implements Runnable {
     // Todas las especies que aún no ha elegido nadie
     private List<TipoEspecie> especiesDisponibles() {
         ArrayList<TipoEspecie> disponibles = new ArrayList<>(List.of(TipoEspecie.values()));
+        disponibles.remove(TipoEspecie.NINGUNA);
         disponibles.removeAll(especiesElegidas.values());
         return disponibles;
     }

@@ -18,7 +18,7 @@ public final class Constantes {
     public static final int BOT_INITIAL_ENERGY = 100;        
     public static final int BOT_DAMAGE = 8;                  
     public static final int BOT_PACK_SIZE = 5;        
-    public static final int TOTAL_ZONES = 9;             
+    public static final int TOTAL_ZONES = 9;
     public static final int TOTAL_COFFEE_CUPS = 10;          
     public static final int MOVIMIENTOS_MINIMOS_CAMBIAR = 3;
     public static final long INTERVALO_STATE_UPDATE_MS = 100L; 
@@ -32,7 +32,7 @@ public final class Constantes {
     public static final long TIEMPO_SLEEP_MINIMO = 20;
 
     public static final int TOTAL_ANIMALES = TOTAL_JUGADORES + TOTAL_BOTS;
-    public static final int TOTAL_ZONAS = 12;
+    public static final int TOTAL_ZONAS = TOTAL_ZONES;
 
     public static final long MS_ESPERA_MAXIMA_COLA = 100;
     public static final long MS_ANTES_DE_MORRIR = 2000;
@@ -42,12 +42,12 @@ public final class Constantes {
 
 
 
-    public static final int MAX_JUGADORES_PARTIDA = 2;
-    public static final long INTERVALO_ACTUALIZACION_MS = 100;
+    public static final int MAX_JUGADORES_PARTIDA = TOTAL_JUGADORES;
+    public static final long INTERVALO_ACTUALIZACION_MS = INTERVALO_STATE_UPDATE_MS;
     public static final String ORIGEN_PARTIDA = "Partida";
 
-    public static final int CANTIDAD_BOTS_PARTIDA = 4;
-    public static final int CANTIDAD_CAFES_PARTIDA = 10;
+    public static final int CANTIDAD_BOTS_PARTIDA = TOTAL_BOTS;
+    public static final int CANTIDAD_CAFES_PARTIDA = TOTAL_COFFEE_CUPS;
     public static final java.awt.Color[] COLORES_BANDERAS = { java.awt.Color.RED, java.awt.Color.BLUE };
     public static final String ERROR_PARTIDA_ZONAS_INSUFICIENTES = "El mapa no tiene suficientes zonas para los jugadores de la partida";
 

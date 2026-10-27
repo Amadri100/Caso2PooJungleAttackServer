@@ -1,6 +1,7 @@
 package src.controlador;
 
 import src.logica.Partida;
+import src.logica.TipoEspecie;
 import src.mensajes.MensajeCaso;
 import src.mensajes.MensajeJugador;
 import src.mensajes.MensajeSelectAnimal;
@@ -24,7 +25,7 @@ public class ManejadorSelectAnimal implements ManejadorMensaje {
             controlador.enviar(nombre, new MensajeCaso(Constantes.ERROR_SIN_PARTIDA));
             return;
         }
-        if (mensaje.getEspecie() == null) {
+        if (mensaje.getEspecie() == null || mensaje.getEspecie() == TipoEspecie.NINGUNA) {
             controlador.enviar(nombre, new MensajeCaso(Constantes.ERROR_ESPECIE));
             return;
         }
