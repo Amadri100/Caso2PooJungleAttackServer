@@ -19,9 +19,6 @@ public abstract class Pack {
     protected Pack(int id, TipoEspecie tipoEspecie, int damage) {
         this.id = id;
         this.especie = new Especie(Objects.requireNonNull(tipoEspecie, "La especie es obligatoria."));
-        if (damage < 0) {
-            throw new IllegalArgumentException("El daño no puede ser negativo.");
-        }
         this.damage = damage;
     }
 

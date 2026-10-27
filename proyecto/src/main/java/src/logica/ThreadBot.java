@@ -1,10 +1,11 @@
 package src.logica;
 
-public class ThreadBot implements Runnable {
+public class ThreadBot extends ThreadAnimal {
 
     private Bot bot;
 
-    public ThreadBot(Bot bot) {
+    public ThreadBot(Partida partida, Bot bot) {
+        super(partida);
         this.bot = bot;
     }
 

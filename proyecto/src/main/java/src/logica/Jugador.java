@@ -40,6 +40,10 @@ public class Jugador extends Pack {
         setEspecie(especie);
     }
 
+    public Jugador copiaBasica() { //Copia con los datos basicos
+        return new Jugador(this.getId(), this.getNickname()); 
+    }
+
     public synchronized void sumarCafe() {
         cafesConsumidos++;
     }

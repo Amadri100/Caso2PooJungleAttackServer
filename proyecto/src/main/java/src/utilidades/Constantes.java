@@ -11,6 +11,8 @@ public final class Constantes {
     public static final long ATTACK_COOLDOWN_MS = 1000L;    
     public static final int MAX_PLAYER_ENERGY = 100;       
     public static final int PLAYER_INITIAL_ENERGY = 100;    
+    public static final int TOTAL_JUGADORES = 2;
+    public static final int TOTAL_BOTS = 5;
     public static final int PLAYER_DAMAGE = 10;              
     public static final int PLAYER_PACK_SIZE = 5;     
     public static final int BOT_INITIAL_ENERGY = 100;        
@@ -29,11 +31,15 @@ public final class Constantes {
     public static final int MAX_COLA = 10000;
     public static final long TIEMPO_SLEEP_MINIMO = 20;
 
+    public static final int TOTAL_ANIMALES = TOTAL_JUGADORES + TOTAL_BOTS;
+    public static final int TOTAL_ZONAS = 12;
+
     public static final long MS_ESPERA_MAXIMA_COLA = 100;
     public static final long MS_ANTES_DE_MORRIR = 2000;
     public static final String NOMBRE_THREAD_LOGGER = "logger";
     public static final String RUTA_ARCHIVO = "Log.log";
     public static final String ORIGEN_SERVER = "Servidor";
+
 
 
     public static final int MAX_JUGADORES_PARTIDA = 2;

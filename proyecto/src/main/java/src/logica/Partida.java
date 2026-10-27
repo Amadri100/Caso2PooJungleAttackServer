@@ -2,6 +2,7 @@ package src.logica;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,9 +41,6 @@ public class Partida implements Runnable {
     private long inicio;
     private String ganador;
 
-    private HashMap<Entidad, Posicion> posiciones = new HashMap<>();
-    private HashMap<Jugador, Zona> zonaInicialJugador = new HashMap<>();
-    private ArrayList<Zona> zonasBots = new ArrayList<>();
     // Especie elegida por cada jugador durante la fase de selección (nickname -> especie)
     private LinkedHashMap<String, TipoEspecie> especiesElegidas = new LinkedHashMap<>();
     // Zona que cada jugador está viendo (nickname -> zona). Si no hay, se usa la primera con animales suyos.
@@ -90,6 +88,39 @@ public class Partida implements Runnable {
         return estado;
     }
 
+    private ArrayList<int[]> generarPosicionesAleatorias(int cantidadNum) {
+        ArrayList<int[]> posiciones = new ArrayList<>();
+        Mapa mapa = Mapa.getInstance();
+        int totalZonas = mapa.getZonas().size();
+        GeneradorAleatorio generador = GeneradorAleatorio.getInstance();
+        ArrayList<Integer> indicesZonas = new ArrayList<>(); 
+        for (int i = 0; i < totalZonas; i++) {
+            indicesZonas.add(i);
+        }
+        generador.mezclar(indicesZonas);
+        // Se asignan las zonas
+        for (int i = 0; i < cantidadNum; i++) {
+            int indiceZona = indicesZonas.get(i);
+            Zona nodos = mapa.getZonas().get(indiceZona);
+            int indiceNodo = generador.nextInt(nodos.getNodos().size());
+            posiciones.add(new int[]{indiceZona, indiceNodo});
+        }
+        return posiciones;
+    }
+
+    private ArrayList<int[]> asignarZonaObjetos() { 
+        return generarPosicionesAleatorias(Constantes.TOTAL_COFFEE_CUPS);
+    }
+
+    private ArrayList<int[]> asignarZonaAnimales() {
+        return generarPosicionesAleatorias(Constantes.TOTAL_ANIMALES);
+    }
+
+    private void incializarInstancias() {
+
+    }
+
+
     // Prepara una partida nueva. Solo se puede llamar una vez.
     public synchronized boolean crearJuego() {
         if (estado != null) {
@@ -133,10 +164,7 @@ public class Partida implements Runnable {
         estado = EstadoPartida.JUGANDO;
         inicio = System.currentTimeMillis();
 
-        asignarZonas();
-        crearBanderas();
-        crearAnimales();
-        crearCafes();
+        incializarInstancias();
 
         notificador = new Notificador(this);
         ejecutor = Executors.newCachedThreadPool();
@@ -312,126 +340,7 @@ public class Partida implements Runnable {
         return resumen;
     }
 
-      // ---- Creación del mundo ----
 
-    // Cada jugador y cada bot recibe una zona distinta (elegida al azar). Ninguna se repite.
-    private void asignarZonas() {
-        GeneradorAleatorio azar = GeneradorAleatorio.getInstance();
-        ArrayList<Zona> libres = zonasConNodos();
-        if (libres.size() < jugadores.size()) {
-            throw new IllegalStateException(Constantes.ERROR_PARTIDA_ZONAS_INSUFICIENTES);
-        }
-
-        for (ThreadJugador hilo : jugadores) {
-            Zona zona = libres.remove(azar.nextInt(libres.size()));
-            zonaInicialJugador.put(hilo.getAnimal(), zona);
-        }
-
-        // Los bots usan las zonas que sobran; si hay menos zonas que bots, se crean menos bots
-        int cantidadBots = Math.min(Constantes.CANTIDAD_BOTS_PARTIDA, libres.size());
-        for (int i = 0; i < cantidadBots; i++) {
-            zonasBots.add(libres.remove(azar.nextInt(libres.size())));
-        }
-    }
-
-    // Una bandera por jugador, en un nodo al azar de su zona. Los bots no tienen bandera.
-    private void crearBanderas() {
-        for (ThreadJugador hilo : jugadores) {
-            Jugador jugador = hilo.getAnimal();
-            Nodo nodo = nodoLibre(zonaInicialJugador.get(jugador));
-            java.awt.Color color = Constantes.COLORES_BANDERAS[jugador.getId() % Constantes.COLORES_BANDERAS.length];
-
-            Bandera bandera = new Bandera(jugador.getId(), posicionEn(nodo), jugador, color);
-            banderas.add(bandera);
-            posiciones.put(bandera, bandera.getPosicion());
-        }
-    }
-
-    // Los animales de cada jugador (con la especie que eligió) y de cada bot (con una especie al azar)
-    // aparecen en un nodo al azar de su zona.
-    private void crearAnimales() {
-        for (ThreadJugador hilo : jugadores) {
-            Jugador jugador = hilo.getAnimal();
-            // AJUSTE: se asumen Jugador.seleccionarEspecie(TipoEspecie) y Jugador.crearAnimales(Nodo)
-            jugador.seleccionarEspecie(especiesElegidas.get(jugador.getNickname()));
-            jugador.crearAnimales(nodoLibre(zonaInicialJugador.get(jugador)));
-            registrarPosiciones(jugador);
-        }
-
-        List<TipoEspecie> especies = Arrays.asList(TipoEspecie.values());
-        for (int i = 0; i < zonasBots.size(); i++) {
-            TipoEspecie especie = GeneradorAleatorio.getInstance().elegir(especies);
-            // AJUSTE: se asumen el constructor Bot(int id, TipoEspecie) y Bot.crearAnimales(Nodo).
-            // Los ids de los bots empiezan después de los de los jugadores.
-            Bot bot = new Bot(Constantes.MAX_JUGADORES_PARTIDA + i, especie);
-            bot.crearAnimales(nodoLibre(zonasBots.get(i)));
-            bots.add(new ThreadBot(bot));
-            manadas.add(bot);
-            registrarPosiciones(bot);
-        }
-    }
-
-    // Los cafés aparecen en zonas y nodos al azar (varios pueden compartir zona)
-    private void crearCafes() {
-        GeneradorAleatorio azar = GeneradorAleatorio.getInstance();
-        ArrayList<Zona> zonas = zonasConNodos();
-        if (zonas.isEmpty()) {
-            return;
-        }
-        for (int i = 0; i < Constantes.CANTIDAD_CAFES_PARTIDA; i++) {
-            Zona zona = azar.elegir(zonas);
-            Cafe cafe = new Cafe(i, posicionEn(nodoLibre(zona)));
-            cafes.add(cafe);
-            posiciones.put(cafe, cafe.getPosicion());
-        }
-    }
-
-    // ---- Auxiliares de la creación ----
-
-    private ArrayList<Zona> zonasConNodos() {
-        ArrayList<Zona> zonas = new ArrayList<>();
-        for (Zona zona : Mapa.getInstance().getZonas()) {
-            if (!zona.getNodos().isEmpty()) {
-                zonas.add(zona);
-            }
-        }
-        return zonas;
-    }
-
-    // Nodo al azar de la zona, evitando los que ya tienen algo. Si todos están ocupados, elige cualquiera.
-    private Nodo nodoLibre(Zona zona) {
-        ArrayList<Nodo> libres = new ArrayList<>();
-        for (Nodo nodo : zona.getNodos()) {
-            if (!nodoOcupado(nodo)) {
-                libres.add(nodo);
-            }
-        }
-        return GeneradorAleatorio.getInstance().elegir(libres.isEmpty() ? zona.getNodos() : libres);
-    }
-
-    private boolean nodoOcupado(Nodo nodo) {
-        for (Posicion posicion : posiciones.values()) {
-            if (posicion.getNodo().igual(nodo)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private Posicion posicionEn(Nodo nodo) {
-        // AJUSTE: se asume Nodo.getPunto(). Si Punto es mutable, usa una copia para cada entidad.
-        return new Posicion(nodo, nodo.getPosicion());
-    }
-
-    // Guarda la posición de cada animal del pack, que el pack da en el mismo orden que su lista
-    private void registrarPosiciones(Pack pack) {
-        List<Animal> animales = pack.getLista();
-        List<Posicion> posicionesPack = pack.getPosiciones();
-        for (int i = 0; i < animales.size(); i++) {
-            // AJUSTE: se asume que Animal extiende Entidad
-            posiciones.put(animales.get(i), posicionesPack.get(i));
-        }
-    }
     // Zona que ve el jugador: la elegida con verZona (si aún tiene animales ahí) o la primera con animales suyos
     private Zona filtrarZona(Jugador jugador) {
         ArrayList<Zona> zonas = jugador.getZonasAnimales();
@@ -442,12 +351,41 @@ public class Partida implements Runnable {
         return zonas.isEmpty() ? null : zonas.get(0);
     }
 
+    private List<Entidad> obtenerEntidadesConZona(Zona zona) {
+        ArrayList<Entidad> entidades = new ArrayList<>();
+        //Itera entre todos y los filtra segun si son iguales a la zona
+        for (ThreadJugador jugador : jugadores) {
+            for (Animal animal : jugador.getAnimal().getLista()) {
+                if (animal.getPosicion().getNodo().getZona().equals(zona)) {
+                    entidades.add(animal);
+                }
+            }
+        }
+        for (ThreadBot bot : bots) {
+            for (Animal animal : bot.getBot().getLista()) {
+                if (animal.getPosicion().getNodo().getZona().equals(zona)) {
+                    entidades.add(animal);
+                }
+            }
+        }
+        for (Cafe cafe : cafes) {
+            if (cafe.getPosicion().getNodo().getZona().equals(zona)) {
+                entidades.add(cafe);
+            }
+        }
+        for (Bandera bandera : banderas) {
+            if (bandera.getPosicion().getNodo().getZona().equals(zona)) {
+                entidades.add(bandera);
+            }
+        }
+        return entidades;
+    }
     private DatosEnviar obtenerDatos(Jugador jugador) {
         Zona zona = filtrarZona(jugador);
         // AJUSTE: se asume Zona.getEntidades() : List<Entidad>
-        List<Entidad> entidades = zona == null ? List.of() : zona.getEntidades();
+        List<Entidad> entidades = zona == null ? List.of() : obtenerEntidadesConZona(zona);
         // AJUSTE: se asume el constructor Datos(Jugador a, Jugador b, Zona zona, List<Entidad> entidades, List<Evento> eventos)
-        Datos datos = new Datos(jugador, oponenteDe(jugador), zona, entidades, eventosDelTick);
+        Datos datos = new Datos(jugador, oponenteDe(jugador), entidades, zona, eventosDelTick);
         return DatosEnviar.desde(datos);
     }
 
