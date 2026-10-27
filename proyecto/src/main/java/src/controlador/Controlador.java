@@ -73,6 +73,10 @@ public class Controlador {
         }
     }
 
+    public int cantidadJugadoresConectador() {
+        return this.servidor.getCantidadClientes();
+    }
+
     // Crea una partida con un código único y agrega al creador. Devuelve el código, o null si falla.
     public String crearJuego(String nickname) {
         if (nickname == null || nickname.isBlank()) { //Nombre no valido
@@ -122,6 +126,10 @@ public class Controlador {
 
     public void setServidor(Servidor servidor) {
         this.servidor = servidor;
+    }
+
+    public void detenerServidor() {
+        this.servidor.detener();
     }
 
     public Mapa getMapa() {
