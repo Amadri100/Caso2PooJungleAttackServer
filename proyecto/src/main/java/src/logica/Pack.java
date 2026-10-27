@@ -2,18 +2,23 @@ package src.logica;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import src.mapa.Zona;
 
 public abstract class Pack {
 
     private final int id;
     private final List<Animal> animales = new ArrayList<>();
-    private final Especie especie;
+    private Especie especie;
     private final int damage;
+    private int conteoDeBajas;
 
     protected Pack(int id, TipoEspecie tipoEspecie, int damage) {
         this.id = id;
-        this.especie = new Especie(tipoEspecie);
+        this.especie = new Especie(Objects.requireNonNull(tipoEspecie, "La especie es obligatoria."));
+        if (damage < 0) {
+            throw new IllegalArgumentException("El daño no puede ser negativo.");
+        }
         this.damage = damage;
     }
 
@@ -23,6 +28,10 @@ public abstract class Pack {
 
     public Especie getEspecie() {
         return especie;
+    }
+
+    protected void setEspecie(TipoEspecie tipoEspecie) {
+        this.especie = new Especie(Objects.requireNonNull(tipoEspecie, "La especie es obligatoria."));
     }
 
     public int getDamage() {
@@ -37,11 +46,34 @@ public abstract class Pack {
         return (int) animales.stream().filter(Animal::estaVivo).count();
     }
 
+    public int getEnergiaTotal() {
+        return animales.stream()
+                .filter(Animal::estaVivo)
+                .mapToInt(Animal::getEnergia)
+                .sum();
+    }
 
-    protected void agregarAnimal(Animal animal) {
-        if (animal == null) {
-            throw new IllegalArgumentException("El animal no puede ser null.");
+    public ArrayList<Zona> getZonasAnimales() {
+        ArrayList<Zona> zonas = new ArrayList<>();
+        for (Animal animal : animales) {
+            Zona zona = animal.getZonaActual();
+            if (animal.estaVivo() && zona != null && !zonas.contains(zona)) {
+                zonas.add(zona);
+            }
         }
+        return zonas;
+    }
+
+    public synchronized void agregarBotEliminado() {
+        conteoDeBajas++;
+    }
+
+    public synchronized int getConteoDeBajas() {
+        return conteoDeBajas;
+    }
+
+    protected synchronized void agregarAnimal(Animal animal) {
+        Objects.requireNonNull(animal, "El animal no puede ser null.");
         if (animales.contains(animal)) {
             return;
         }
