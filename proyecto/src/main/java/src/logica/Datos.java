@@ -22,6 +22,11 @@ public class Datos {
         this.eventos = List.copyOf(eventos);
     }
 
+    public Datos(Jugador jugadorA, Jugador jugadorB, Zona zonaActual,
+                 List<Entidad> entidadesDisponibles, List<Evento> eventos) {
+        this(jugadorA, jugadorB, entidadesDisponibles, zonaActual, eventos);
+    }
+
     public Jugador getJugadorA() {
         return jugadorA;
     }

@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import src.mapa.Nodo;
 import src.mapa.Posicion;
 import src.mapa.Zona;
+import src.utilidades.Punto;
 
 public abstract class Pack {
 
@@ -92,5 +94,30 @@ public abstract class Pack {
             posiciones.add(animal.getPosicion());
         }
         return posiciones;
+    }
+
+    protected synchronized void crearAnimales(Nodo nodoInicial, int cantidad, int energiaInicial) {
+        Objects.requireNonNull(nodoInicial, "El nodo inicial no puede ser null.");
+        if (cantidad < 0 || energiaInicial < 0) {
+            throw new IllegalArgumentException("La cantidad y energía inicial no pueden ser negativas.");
+        }
+        if (!animales.isEmpty()) {
+            throw new IllegalStateException("Los animales de este pack ya fueron creados.");
+        }
+
+        Punto punto = Objects.requireNonNull(nodoInicial.getPosicion(), "El nodo debe tener posición.");
+        for (int idAnimal = 0; idAnimal < cantidad; idAnimal++) {
+            Posicion posicion = new Posicion(
+                    nodoInicial,
+                    new Punto(punto.getX(), punto.getY()));
+            agregarAnimal(new AnimalPack(idAnimal, posicion, energiaInicial));
+        }
+    }
+
+    private static final class AnimalPack extends Animal {
+
+        private AnimalPack(int id, Posicion posicion, int energia) {
+            super(id, posicion, energia);
+        }
     }
 }
