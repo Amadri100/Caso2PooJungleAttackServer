@@ -7,11 +7,14 @@ public class EntradaLog {
     private NivelLog nivel;
     private String origen;
     private String mensaje;
-    public EntradaLog(NivelLog nivel, String origen, String mensaje) {
+    private Throwable causa;
+
+    public EntradaLog(NivelLog nivel, String origen, String mensaje, Throwable causa) {
         this.momento = LocalDateTime.now();
         this.nivel = nivel;
         this.origen = origen;
         this.mensaje = mensaje;
+        this.causa = causa;
     }
     public String getOrigen() {
         return origen;
@@ -24,5 +27,19 @@ public class EntradaLog {
     }
     public NivelLog getNivel() {
         return nivel;
+    }
+    public Throwable getCausa() {
+        return this.causa;
+    }
+    @Override 
+    public String toString() {
+        String texto = "";
+        texto += getNivel().toString() + Constantes.SEPARADOR_ERROR;
+        texto += getOrigen() + Constantes.ESPACIO_ENTRE_TEXTO;
+        texto += getMensaje();
+        if (getCausa() != null) {
+            texto += Constantes.SEPARADOR_ERROR + getCausa().getMessage();
+        }
+        return texto;
     }
 }

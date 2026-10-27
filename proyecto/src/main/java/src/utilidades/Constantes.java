@@ -26,13 +26,24 @@ public final class Constantes {
     public static final int MAX_LINEAS_CONSOLA = 200;     
     public static final int MAX_HISTORIAL_LOG = 1000;   
     public static final String CARACTERES_CODIGO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-
+    public static final int MAX_COLA = 10000;
     public static final long TIEMPO_SLEEP_MINIMO = 20;
 
+    public static final long MS_ESPERA_MAXIMA_COLA = 100;
+    public static final long MS_ANTES_DE_MORRIR = 2000;
+    public static final String NOMBRE_THREAD_LOGGER = "logger";
+    public static final String RUTA_ARCHIVO = "Log.log";
     public static final String ORIGEN_SERVER = "Servidor";
 
     public static final String SEPARADOR_ERROR = ": ";
+    public static final String ESPACIO_ENTRE_TEXTO = ", ";
+    public static final String TEXTO_DEFECTO = "DEFECTO";
+
+    public static final String DEBUG = "DEBUG";
+    public static final String ERROR = "ERROR";
+    public static final String INFO = "INFO";
+
+    public static final String ERROR_EN_LOGGER = "ERROR interno en el logger";
 
     public static final String ERROR_NOMBRE_NO_DISPONIBLE = "El nombre ya esta reservado";
     public static final String NO_HAY_ERROR = "NO ERROR";
