@@ -1,5 +1,6 @@
 package src.logica;
 
+import src.mapa.Nodo;
 import src.mapa.Ruta;
 import src.utilidades.Constantes;
 
@@ -13,8 +14,12 @@ public class Bot extends Pack {
         super(id, tipoEspecie, Constantes.BOT_DAMAGE);
     }
 
+    public void crearAnimales(Nodo nodoInicial) {
+        crearAnimales(nodoInicial, Constantes.BOT_PACK_SIZE, Constantes.BOT_INITIAL_ENERGY);
+    }
+
     public EstrategiaBot getEstrategia() {
-        return null;
+        return estrategia;
     }
 
     public void cambiarDeEstrategia() {

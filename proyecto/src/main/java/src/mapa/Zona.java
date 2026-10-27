@@ -1,30 +1,66 @@
 package src.mapa;
+
 import java.util.ArrayList;
-public class Zona { 
+import java.util.List;
+import src.logica.Entidad;
+
+public class Zona {
     private int id;
-    private ArrayList<Nodo> nodos;
-    private Mapa mapa;
+    private final ArrayList<Nodo> nodos;
+    private final ArrayList<Entidad> entidades;
+    private final Mapa mapa;
+
     public Zona(Mapa map) {
         this.mapa = map;
+        this.nodos = new ArrayList<>();
+        this.entidades = new ArrayList<>();
     }
+
+    public Zona(int id, Mapa mapa) {
+        this(mapa);
+        this.id = id;
+    }
+
     public ArrayList<Nodo> getNodos() {
-        return this.nodos;
-    } 
+        return new ArrayList<>(this.nodos);
+    }
+
+    public synchronized List<Entidad> getEntidades() {
+        return List.copyOf(entidades);
+    }
+
     public Mapa getMapa() {
-        return this.mapa;
-    } 
+        return mapa;
+    }
+
     public int getId() {
-        return this.id;
+        return id;
     }
+
     public void agregarNodo(Nodo nodo) {
-        this.nodos.add(nodo);
-    }
-    public boolean contiene(Nodo nodo) {
-        if (nodos.size() < nodo.getId()) {
-            if (nodos.get(nodo.getId()).igual(nodo)) {
-                return true;
-            }
+        if (nodo == null) {
+            throw new IllegalArgumentException("El nodo no puede ser null.");
         }
-        return false;
+        nodos.add(nodo);
+    }
+
+    public synchronized void agregarEntidad(Entidad entidad) {
+        if (entidad == null) {
+            throw new IllegalArgumentException("La entidad no puede ser null.");
+        }
+        if (!entidades.contains(entidad)) {
+            entidades.add(entidad);
+        }
+    }
+
+    public synchronized void quitarEntidad(Entidad entidad) {
+        entidades.remove(entidad);
+    }
+
+    public boolean contiene(Nodo nodo) {
+        if (nodo == null || nodo.getId() < 0 || nodo.getId() >= nodos.size()) {
+            return false;
+        }
+        return nodos.get(nodo.getId()).igual(nodo);
     }
 }

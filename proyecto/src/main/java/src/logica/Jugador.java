@@ -1,7 +1,9 @@
 package src.logica;
 
 import java.util.Objects;
+import src.mapa.Nodo;
 import src.mapa.Zona;
+import src.utilidades.Constantes;
 
 public class Jugador extends Pack {
 
@@ -12,7 +14,7 @@ public class Jugador extends Pack {
     private boolean conectado;
 
     public Jugador(int id, String nickname) {
-        this(id, nickname, 0);
+        this(id, nickname, Constantes.PLAYER_DAMAGE);
     }
 
     public Jugador(int id, String nickname, int damage) {
@@ -38,6 +40,17 @@ public class Jugador extends Pack {
             throw new IllegalArgumentException("Debe elegirse una especie concreta.");
         }
         setEspecie(especie);
+    }
+
+    public void seleccionarEspecie(TipoEspecie especie) {
+        elegirEspecie(especie);
+    }
+
+    public void crearAnimales(Nodo nodoInicial) {
+        if (getEspecie().getTipo() == TipoEspecie.NINGUNA) {
+            throw new IllegalStateException("Debe seleccionar una especie antes de crear animales.");
+        }
+        crearAnimales(nodoInicial, Constantes.PLAYER_PACK_SIZE, Constantes.PLAYER_INITIAL_ENERGY);
     }
 
     public Jugador copiaBasica() { //Copia con los datos basicos
