@@ -78,7 +78,7 @@ public final class Constantes {
     public static final String INFO = "INFO";
 
     public static final String ERROR_EN_LOGGER = "ERROR interno en el logger";
-
+    public static final String ERROR_NOMBRE_YA_ASIGNADO = "Ya tienes un nombre asignado";
     public static final String ERROR_CREAR = "No se pudo crear la partida";
     public static final String ERROR_ESPECIE = "Debes indicar una especie";
     public static final String ERROR_SIN_PARTIDA = "No estás en una partida";

@@ -8,9 +8,9 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import src.mensajes.Mensaje;
-import src.mensajes.MensajeCaso;
 import src.mensajes.MensajeIndicarNombre;
 import src.mensajes.MensajeJugador;
+import src.mensajes.MensajePrimerMensaje;
 import src.mensajes.MensajeServidor;
 import src.mensajes.TipoMensaje;
 import src.utilidades.Constantes;
@@ -60,8 +60,6 @@ public class ClientHandler implements Runnable {
                 catch (InterruptedException e) {
                     Thread.currentThread().interrupt(); 
                 }
-                
-
             }
         } catch (IOException e) {
             // Conexión perdida o cerrada: se limpia en el finally
@@ -71,14 +69,19 @@ public class ClientHandler implements Runnable {
     }
 
     private void manejarNombre(MensajeIndicarNombre msg) {
-        String nombreSolicitado = msg.getNombre();
-        if (nombre == null && servidor.asignarNombre(this, nombreSolicitado)) {
-            this.nombre = nombreSolicitado;
-            mandar(new MensajeCaso(true, Constantes.NO_HAY_ERROR));
-        } else {
-            mandar(new MensajeCaso(false, Constantes.ERROR_NOMBRE_NO_DISPONIBLE));
+        if (nombre != null) {
+            mandar(new MensajePrimerMensaje(false, Constantes.ERROR_NOMBRE_YA_ASIGNADO));
+            return;
         }
+        String nombreSolicitado = msg.getNombre();
+        if (!servidor.asignarNombre(this, nombreSolicitado)) {
+            mandar(new MensajePrimerMensaje(false, Constantes.ERROR_NOMBRE_NO_DISPONIBLE));
+            return;
+        }
+        this.nombre = nombreSolicitado;
+        mandar(new MensajePrimerMensaje(true, null));
     }
+
 
     public String getNombre() {
         return nombre;
@@ -112,5 +115,4 @@ public class ClientHandler implements Runnable {
             // Ya estaba cerrado
         }
     }
-
 }
