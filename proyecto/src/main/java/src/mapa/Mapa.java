@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 import src.utilidades.Constantes;
+import src.utilidades.Punto;
 
 public class Mapa {
     private static volatile Mapa instance = null;
@@ -15,8 +16,37 @@ public class Mapa {
         this.zonas = new ArrayList<>();
         this.vecinos = new HashMap<>();
         crearZonas();
+        crearNodos();
+        crearVecinos();
     }
 
+
+    private void crearNodos() {
+    for (int idZona = 0; idZona < Constantes.TOTAL_ZONES; idZona++) {
+        Zona zona = zonas.get(idZona);
+        double[][] coords = Constantes.COORDENADAS_NODOS[idZona];
+        for (int idNodo = 0; idNodo < coords.length; idNodo++) {
+            Punto pos = new Punto(coords[idNodo][0], coords[idNodo][1]);
+            // La zona se pasa en el constructor porque hashCode() la necesita
+            Nodo nodo = new Nodo(idNodo, pos, zona);
+            zona.agregarNodo(nodo);
+            vecinos.put(nodo, new ArrayList<>());
+        }
+    }
+}
+
+    private void crearVecinos() {
+        for (int[] c : Constantes.CONEXIONES) {
+            Nodo a = getNodo(new int[]{c[0], c[1]});
+            Nodo b = getNodo(new int[]{c[2], c[3]});
+            double peso = a.getPosicion().distanciaCon(b.getPosicion());
+
+            // Un solo objeto Vecinos compartido por A y B
+            Vecinos v = new Vecinos(a, b, peso);
+            vecinos.get(a).add(v);
+            vecinos.get(b).add(v);
+        }
+    }
     private void crearZonas() {
         for (int idZona = 0; idZona < Constantes.TOTAL_ZONES; idZona++) {
             zonas.add(new Zona(idZona, this));
@@ -33,6 +63,7 @@ public class Mapa {
         }
         return instance;
     }
+    
     public ArrayList<Zona> getZonas() {
         return this.zonas;
     }

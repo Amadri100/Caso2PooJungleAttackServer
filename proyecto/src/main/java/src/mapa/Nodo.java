@@ -6,6 +6,12 @@ public class Nodo {
     private int id; //Id en zona
     private Punto posicion;
     private Zona zona;
+    
+    public Nodo (int id, Punto posicion) {
+        this.id = id;
+        this.posicion = posicion;
+        this.zona = null;
+    }
     public Nodo (int id, Punto posicion, Zona zona) {
         this.id = id;
         this.posicion = posicion;
@@ -16,6 +22,9 @@ public class Nodo {
     }
     public Punto getPosicion() {
         return this.posicion;
+    }
+    public void setZona(Zona zona) {
+        this.zona = zona;
     }
     public Zona getZona() {
         return this.zona;
