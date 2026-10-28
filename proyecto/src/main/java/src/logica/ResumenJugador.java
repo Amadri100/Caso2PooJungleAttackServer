@@ -3,8 +3,9 @@ package src.logica;
 import src.mapa.Zona;
 
 public class ResumenJugador {
-
+    private String nickname;
     private TipoEspecie especie;
+    private int energia;
     private int damage;
     private int conteoDeBajas;
     private Zona zonaElegida;
@@ -13,6 +14,8 @@ public class ResumenJugador {
     private int totalVivos;
 
     public ResumenJugador(Jugador jugador) {
+        this.nickname = jugador.getNickname();
+        this.energia = jugador.getEnergiaTotal();
         this.especie = jugador.getEspecie();
         this.damage = jugador.getDamage();
         this.conteoDeBajas = jugador.getConteoDeBajas();
@@ -21,6 +24,14 @@ public class ResumenJugador {
         this.botsEliminados = jugador.getBotsEliminados();
         this.totalVivos = jugador.getVivos();
 
+    }
+
+    public int getEnergia() {
+        return this.energia;
+    }
+
+    public String getNickname() {
+        return this.nickname;
     }
 
     public TipoEspecie getEspecie() {
