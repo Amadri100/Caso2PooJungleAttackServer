@@ -21,6 +21,8 @@ public final class Constantes {
     public static final int BOT_INITIAL_ENERGY = 100;        
     public static final int BOT_DAMAGE = 8;                  
     public static final int BOT_PACK_SIZE = 5;        
+    public static final int COFFEE_DAMAGE_BONUS = 1;
+    public static final int ENERGY_BONUS_PER_TWO_BOTS = 1;
     public static final int TOTAL_ZONES = 9;
     public static final int TOTAL_COFFEE_CUPS = 10;          
     public static final int MOVIMIENTOS_MINIMOS_CAMBIAR = 3;
@@ -59,6 +61,7 @@ public final class Constantes {
     public static final String ERROR_PARTIDA_ESPECIE_NO_DISPONIBLE = "La especie no está disponible";
     public static final String ERROR_PARTIDA_ESPECIE_YA_ELEGIDA = "Ya elegiste una especie";
     public static final String ERROR_PARTIDA_ANIMAL_AJENO = "Solo puedes dar órdenes a tus propios animales";
+    public static final String ERROR_PARTIDA_MOVIMIENTO_INVALIDO = "El destino de movimiento no es válido o no tiene ruta";
     public static final String ERROR_PARTIDA_ATAQUE_INVALIDO = "Ataque inválido";
     public static final String ERROR_PARTIDA_ZONA_NO_VISIBLE = "No tienes animales en esa zona";
 

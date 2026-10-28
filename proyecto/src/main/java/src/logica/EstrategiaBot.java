@@ -3,7 +3,5 @@
 import src.mapa.Ruta;
 
 public interface EstrategiaBot {
- 
-   // public Ruta elegirDestino(Bot bot, Partida partida); 
-    
- }
+    Ruta elegirDestino(Bot bot, Partida partida);
+}

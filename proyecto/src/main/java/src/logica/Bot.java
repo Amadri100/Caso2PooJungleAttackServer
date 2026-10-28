@@ -33,11 +33,31 @@ public class Bot extends Pack {
     }
 
     public void cambiarDeEstrategia() {
+        estrategia = new SelectorEstrategia().elegir();
+        rutaActual = null;
+        movimientosEnRuta = 0;
+    }
+
+    public void setRutaActual(Ruta rutaActual) {
+        this.rutaActual = rutaActual;
+        this.movimientosEnRuta = 0;
+    }
+
+    public Ruta getRutaActual() {
+        return rutaActual;
+    }
+
+    public int getMovimientosEnRuta() {
+        return movimientosEnRuta;
+    }
+
+    public void registrarMovimiento() {
+        movimientosEnRuta++;
     }
 
     @Override
     public int atacar(int[] idEnemigo) {
-        return -1; //TODO
+        return atacarObjetivo(idEnemigo);
     }
 
 }

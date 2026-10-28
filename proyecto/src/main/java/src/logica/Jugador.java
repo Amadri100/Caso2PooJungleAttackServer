@@ -38,7 +38,7 @@ public class Jugador extends Pack {
     }
 
     public void elegirEspecie(TipoEspecie especie) {
-        if (especie == TipoEspecie.NINGUNA) {
+        if (especie == null || especie == TipoEspecie.NINGUNA) {
             throw new IllegalArgumentException("Debe elegirse una especie concreta.");
         }
         setEspecie(especie);
@@ -46,6 +46,10 @@ public class Jugador extends Pack {
 
     public void seleccionarEspecie(TipoEspecie especie) {
         elegirEspecie(especie);
+    }
+
+    public void setObjetivo(Animal objetivo) {
+        super.setObjetivo(objetivo);
     }
 
     public void crearAnimales(Nodo nodoInicial) {
@@ -93,6 +97,6 @@ public class Jugador extends Pack {
 
     @Override
     public int atacar(int[] idEnemigo) {
-        return -1;
+        return atacarObjetivo(idEnemigo);
     }
 }

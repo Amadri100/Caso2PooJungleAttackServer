@@ -21,9 +21,14 @@ public class Bandera extends Entidad {
     }
  
     public boolean fueTocadaPor(Animal animal) {
-        if (animal == null) {
+        if (animal == null || !animal.estaVivo()
+                || this.getPosicion() == null || animal.getPosicion() == null
+                || this.getPosicion().getPunto() == null
+                || animal.getPosicion().getPunto() == null) {
             return false;
         }
-        return this.getPosicion().equals(animal.getPosicion());
+        double diferenciaX = this.getPosicion().getPunto().getX() - animal.getPosicion().getPunto().getX();
+        double diferenciaY = this.getPosicion().getPunto().getY() - animal.getPosicion().getPunto().getY();
+        return Math.hypot(diferenciaX, diferenciaY) <= src.utilidades.Constantes.ENCOUNTER_RADIUS;
     }
 }

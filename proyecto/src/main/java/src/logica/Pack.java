@@ -7,6 +7,7 @@ import java.util.Objects;
 import src.mapa.Nodo;
 import src.mapa.Posicion;
 import src.mapa.Zona;
+import src.utilidades.Constantes;
 import src.utilidades.Punto;
 
 public abstract class Pack {
@@ -14,11 +15,16 @@ public abstract class Pack {
     private final int id;
     private final List<Animal> animales = new ArrayList<>();
     private TipoEspecie especie;
-    private final int damage;
+    private int damage;
     private int conteoDeBajas = 0;
     private int conteoMuertes = 0;
+    private long ultimoAtaque = Long.MIN_VALUE;
+    private Animal objetivo;
 
     protected Pack(int id, TipoEspecie tipoEspecie, int damage) {
+        if (id < 0 || tipoEspecie == null || damage < 0) {
+            throw new IllegalArgumentException("El id, especie y daño del pack deben ser válidos.");
+        }
         this.id = id;
         this.especie = tipoEspecie;
         this.damage = damage;
@@ -38,6 +44,63 @@ public abstract class Pack {
 
     public int getDamage() {
         return damage;
+    }
+
+    public synchronized void aumentarDamage(int incremento) {
+        if (incremento < 0) {
+            throw new IllegalArgumentException("El incremento de daño no puede ser negativo.");
+        }
+        damage += incremento;
+    }
+
+    public synchronized void setObjetivo(Animal objetivo) {
+        this.objetivo = objetivo;
+    }
+
+    public synchronized Animal getObjetivo() {
+        return objetivo;
+    }
+
+    public synchronized int atacar(Animal objetivo, long ahora) {
+        if (objetivo == null || !objetivo.estaVivo() || objetivo.getPack() == this
+                || getVivos() == 0) {
+            return -1;
+        }
+        if (ultimoAtaque != Long.MIN_VALUE
+                && (ahora < ultimoAtaque || ahora - ultimoAtaque < Constantes.ATTACK_COOLDOWN_MS)) {
+            return -1;
+        }
+
+        ultimoAtaque = ahora;
+        this.objetivo = objetivo;
+        boolean estabaVivo = objetivo.estaVivo();
+        objetivo.recibirDamage(damage);
+        if (estabaVivo && !objetivo.estaVivo()) {
+            conteoDeBajas++;
+            Pack packObjetivo = objetivo.getPack();
+            if (packObjetivo != null) {
+                packObjetivo.registrarMuerte();
+            }
+            if (this instanceof Jugador jugador
+                    && packObjetivo instanceof Bot bot
+                    && bot.getVivos() == 0) {
+                jugador.sumarBotEliminado();
+                if (jugador.getBotsEliminados() % 2 == 0) {
+                    for (Animal animal : jugador.getLista()) {
+                        if (animal.estaVivo()) {
+                            animal.recuperarEnergia(
+                                    Constantes.ENERGY_BONUS_PER_TWO_BOTS,
+                                    Constantes.MAX_PLAYER_ENERGY);
+                        }
+                    }
+                }
+            }
+        }
+        return damage;
+    }
+
+    synchronized void registrarMuerte() {
+        conteoMuertes++;
     }
 
     public List<Animal> getLista() {
@@ -74,6 +137,10 @@ public abstract class Pack {
         return conteoDeBajas;
     }
 
+    public synchronized int getConteoMuertes() {
+        return conteoMuertes;
+    }
+
     protected synchronized void agregarAnimal(Animal animal) {
         Objects.requireNonNull(animal, "El animal no puede ser null.");
         if (animales.contains(animal)) {
@@ -84,6 +151,16 @@ public abstract class Pack {
     }
 
     public abstract int atacar(int[] idEnemigo);
+
+    protected synchronized int atacarObjetivo(int[] idEnemigo) {
+        if (idEnemigo == null || idEnemigo.length != 2 || objetivo == null
+                || objetivo.getPack() == null
+                || objetivo.getPack().getId() != idEnemigo[0]
+                || objetivo.getId() != idEnemigo[1]) {
+            return -1;
+        }
+        return atacar(objetivo, System.currentTimeMillis());
+    }
 
     public List<Posicion> getPosiciones() {
         ArrayList<Posicion> posiciones = new ArrayList<>();
@@ -114,7 +191,7 @@ public abstract class Pack {
 
     protected synchronized void crearAnimales(List<Posicion> posiciones, int energiaInicial) {
         Objects.requireNonNull(posiciones, "La lista de posiciones es obligatoria.");
-        if (especie == TipoEspecie.NINGUNA) {
+        if (especie == null || especie == TipoEspecie.NINGUNA) {
             throw new IllegalStateException("Debe seleccionarse una especie antes de crear animales.");
         }
         if (energiaInicial < 0) {
@@ -139,7 +216,7 @@ public abstract class Pack {
         if (idAnimal < 0 || energiaInicial < 0) {
             throw new IllegalArgumentException("El id y la energía del animal no pueden ser negativos.");
         }
-        if (especie == TipoEspecie.NINGUNA) {
+        if (especie == null || especie == TipoEspecie.NINGUNA) {
             throw new IllegalStateException("Debe seleccionarse una especie antes de agregar animales.");
         }
         agregarAnimal(new AnimalPack(idAnimal, posicion, energiaInicial));

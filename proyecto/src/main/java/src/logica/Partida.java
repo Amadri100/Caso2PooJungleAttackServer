@@ -88,6 +88,122 @@ public class Partida implements Runnable {
         return estado;
     }
 
+    public synchronized List<Jugador> getJugadores() {
+        ArrayList<Jugador> resultado = new ArrayList<>(jugadores.size());
+        for (ThreadJugador hilo : jugadores) {
+            resultado.add(hilo.getAnimal());
+        }
+        return List.copyOf(resultado);
+    }
+
+    public synchronized List<Pack> getPacks() {
+        return List.copyOf(manadas);
+    }
+
+    public synchronized List<Animal> obtenerEnemigos(Pack pack) {
+        ArrayList<Animal> enemigos = new ArrayList<>();
+        for (Pack manada : manadas) {
+            if (manada != pack) {
+                for (Animal animal : manada.getLista()) {
+                    if (animal.estaVivo()) {
+                        enemigos.add(animal);
+                    }
+                }
+            }
+        }
+        return enemigos;
+    }
+
+    public synchronized Animal obtenerAnimal(int[] idAnimal) {
+        if (idAnimal == null || idAnimal.length != 2 || idAnimal[0] < 0 || idAnimal[1] < 0) {
+            return null;
+        }
+        for (Pack pack : manadas) {
+            if (pack.getId() == idAnimal[0]) {
+                List<Animal> animales = pack.getLista();
+                return idAnimal[1] < animales.size() ? animales.get(idAnimal[1]) : null;
+            }
+        }
+        return null;
+    }
+
+    public synchronized int ejecutarAtaque(Pack atacante, Animal objetivo, long ahora) {
+        if (atacante == null || objetivo == null) {
+            return -1;
+        }
+        for (Animal animalAtacante : atacante.getLista()) {
+            if (animalAtacante.estaVivo() && enRango(animalAtacante, objetivo)) {
+                return ejecutarAtaque(atacante, animalAtacante, objetivo, ahora);
+            }
+        }
+        return -1;
+    }
+
+    public synchronized int ejecutarAtaque(
+            Pack atacante,
+            Animal animalAtacante,
+            Animal objetivo,
+            long ahora) {
+        if (estado != EstadoPartida.JUGANDO || atacante == null || animalAtacante == null
+                || objetivo == null || !manadas.contains(atacante)
+                || animalAtacante.getPack() != atacante || !animalAtacante.estaVivo()
+                || objetivo.getPack() == atacante || !manadas.contains(objetivo.getPack())
+                || !objetivo.estaVivo()
+                || !enRango(animalAtacante, objetivo)) {
+            return -1;
+        }
+
+        Posicion origen = animalAtacante.getPosicion();
+        Posicion destino = objetivo.getPosicion();
+        int damage = atacante.atacar(objetivo, ahora);
+        if (damage >= 0) {
+            registrarEvento(new Evento(TipoEvento.ATAQUE, origen, destino));
+        }
+        return damage;
+    }
+
+    public synchronized void procesarInteracciones(Pack pack) {
+        if (estado != EstadoPartida.JUGANDO || pack == null || !manadas.contains(pack)) {
+            return;
+        }
+        for (Animal animal : pack.getLista()) {
+            if (!animal.estaVivo()) {
+                continue;
+            }
+            for (Cafe cafe : cafes) {
+                if (cafe.estaDisponible() && enRango(animal, cafe)
+                        && cafe.consumir()) {
+                    pack.aumentarDamage(Constantes.COFFEE_DAMAGE_BONUS);
+                    if (pack instanceof Jugador jugador) {
+                        jugador.sumarCafe();
+                    }
+                }
+            }
+            if (pack instanceof Jugador jugador) {
+                for (Bandera bandera : banderas) {
+                    if (bandera.getJugador() != jugador && bandera.fueTocadaPor(animal)) {
+                        finalizar(jugador);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    void reportarError(String nombre, String descripcion) {
+        enviarError(nombre, descripcion);
+    }
+
+    private boolean enRango(Entidad a, Entidad b) {
+        if (a == null || b == null || a.getPosicion() == null || b.getPosicion() == null
+                || a.getPosicion().getPunto() == null || b.getPosicion().getPunto() == null) {
+            return false;
+        }
+        double diferenciaX = a.getPosicion().getPunto().getX() - b.getPosicion().getPunto().getX();
+        double diferenciaY = a.getPosicion().getPunto().getY() - b.getPosicion().getPunto().getY();
+        return Math.hypot(diferenciaX, diferenciaY) <= Constantes.ENCOUNTER_RADIUS;
+    }
+
     private ArrayList<int[]> generarPosicionesAleatorias(int cantidadNum) {
         if (cantidadNum < 0) {
             throw new IllegalArgumentException("La cantidad de ubicaciones no puede ser negativa.");
@@ -380,8 +496,16 @@ public class Partida implements Runnable {
         if (hilo == null) {
             return;
         }
+        if (animales == null || animales.isEmpty() || idNodo == null || idNodo.length < 2) {
+            enviarError(nombre, Constantes.ERROR_ANIMALES);
+            return;
+        }
         int idPack = hilo.getAnimal().getId();
         for (int[] animal : animales) {
+            if (animal == null || animal.length != 2 || animal[1] < 0) {
+                enviarError(nombre, Constantes.ERROR_ANIMALES);
+                return;
+            }
             if (animal[0] != idPack) {
                 enviarError(nombre, Constantes.ERROR_PARTIDA_ANIMAL_AJENO);
                 return;
@@ -394,6 +518,11 @@ public class Partida implements Runnable {
     public void mandarAtaque(String nombre, int[] A, int[] B) {
         ThreadJugador hilo = validarAccion(nombre);
         if (hilo == null) {
+            return;
+        }
+        if (A == null || A.length != 2 || B == null || B.length != 2
+                || A[1] < 0 || B[0] < 0 || B[1] < 0) {
+            enviarError(nombre, Constantes.ERROR_PARTIDA_ATAQUE_INVALIDO);
             return;
         }
         int idPack = hilo.getAnimal().getId();
