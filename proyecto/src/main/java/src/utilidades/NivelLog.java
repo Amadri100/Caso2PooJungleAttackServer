@@ -1,5 +1,7 @@
 package src.utilidades;
- 
+
+import java.net.ContentHandler;
+
 public enum NivelLog {
     DEBUG,
     INFO,
@@ -19,6 +21,9 @@ public enum NivelLog {
             case INFO:
                 texto = Constantes.INFO;
                 break;        
+            case WARN:
+                texto = Constantes.WARN;
+                break;
         }
         return texto;
     } 

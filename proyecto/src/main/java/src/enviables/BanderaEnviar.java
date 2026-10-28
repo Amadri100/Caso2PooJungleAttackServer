@@ -7,7 +7,7 @@ import src.logica.TipoEntidad;
 public class BanderaEnviar extends EntidadEnviar {
 
     private final int idJugador;
-    private final String color;
+    private final String color; // Formato hexadecimal "#RRGGBB"
 
     public BanderaEnviar(int id, PosicionEnviar posicion, int idJugador, String color) {
         super(id, TipoEntidad.BANDERA, posicion);
@@ -26,8 +26,12 @@ public class BanderaEnviar extends EntidadEnviar {
                 bandera.getId(),
                 PosicionEnviar.desde(bandera.getPosicion()),
                 bandera.getJugador().getId(),
-                color.toString()
-        );
+                aHexadecimal(color));
+    }
+
+    // Color.toString() produce "java.awt.Color[r=..]", que el cliente no puede interpretar
+    private static String aHexadecimal(java.awt.Color color) {
+        return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
     }
 
     public int getIdJugador() {

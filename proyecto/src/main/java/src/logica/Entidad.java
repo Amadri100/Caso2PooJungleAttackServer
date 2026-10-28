@@ -27,6 +27,11 @@ public abstract class Entidad {
         actualizarRegistroZona(posicion);
         this.posicion = posicion;
     }
+    
+    public double distanciaCon(Entidad entidad) {
+        return this.posicion.getPunto().distanciaCon(entidad.getPosicion().getPunto());
+    }
+
 
     private void actualizarRegistroZona(Posicion posicion) {
         Zona nuevaZona = posicion == null || posicion.getNodo() == null
@@ -42,5 +47,7 @@ public abstract class Entidad {
             zonaRegistrada = nuevaZona;
         }
     }
+
+
 
 }

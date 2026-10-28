@@ -21,4 +21,7 @@ public class Posicion {
     public void setPunto(Punto punto) {
         this.punto = punto;
     }
+
+    
+
 }
